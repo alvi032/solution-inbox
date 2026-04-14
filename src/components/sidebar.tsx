@@ -8,6 +8,7 @@ import {
   AtSign,
   UserRoundX,
   Archive,
+  ShieldAlert,
   Crown,
   CircleDollarSign,
   PanelLeft,
@@ -28,6 +29,7 @@ const navItems = [
   { icon: <AtSign size={16} />, label: 'My Tickets' },
   { icon: <UserRoundX size={16} />, label: 'Unassigned' },
   { icon: <Archive size={16} />, label: 'Archived' },
+  { icon: <ShieldAlert size={16} />, label: 'Spam' },
 ];
 
 const defaultSmartViews = [

@@ -14,13 +14,25 @@ import {
   ShoppingCart,
   Ticket as TicketIcon,
   UserRound,
+  Check,
+  X,
+  ExternalLink,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import AiConfidenceTooltip from './ai-confidence-tooltip';
 
 interface DetailPanelProps {
   ticket: Ticket;
-  onResolve?: () => void;
-  onArchive?: () => void;
+  effectiveStatus: 'open' | 'closed';
+  isArchived: boolean;
+  showResolvedBanner: boolean;
+  isSpam: boolean;
+  onArchive: () => void;
+  onUnarchive: () => void;
+  onResolve: () => void;
+  onReopen: () => void;
+  onMarkSpam: () => void;
+  onUnmarkSpam: () => void;
 }
 
 function ConfidenceBar({ ticket }: { ticket: Ticket }) {
@@ -99,6 +111,24 @@ function FieldRow({ label, value }: { label: string; value: string }) {
 }
 
 function DetailsTab({ ticket }: { ticket: Ticket }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({
+    name: ticket.customer.name,
+    email: ticket.customer.email,
+    phone: ticket.customer.phone,
+    address: ticket.customer.address,
+  });
+  const [saved, setSaved] = useState(draft);
+
+  const handleSave = () => {
+    setSaved(draft);
+    setEditing(false);
+  };
+  const handleCancel = () => {
+    setDraft(saved);
+    setEditing(false);
+  };
+
   return (
     <div>
       {/* Ticket Details */}
@@ -117,17 +147,69 @@ function DetailsTab({ ticket }: { ticket: Ticket }) {
         icon={<UserRound size={14} />}
         label="Customer Details"
         actions={
-          <div className="flex items-center gap-1.5">
-            <button className="text-[#a1a1aa] hover:text-[#71717a]"><SquarePen size={12} /></button>
-            <button className="text-[#a1a1aa] hover:text-[#71717a]"><ShoppingBag size={12} /></button>
-          </div>
+          !editing && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setEditing(true)}
+                className="flex items-center gap-1 h-6 px-2 rounded border border-[#e4e4e7] bg-white text-[#18181b] text-[11px] font-medium hover:bg-[#f4f4f5] transition-colors"
+              >
+                <SquarePen size={11} />
+                Edit
+              </button>
+              <button
+                className="flex items-center gap-1 h-6 px-2 rounded border border-[#e4e4e7] bg-white text-[#18181b] text-[11px] font-medium hover:bg-[#f4f4f5] transition-colors"
+                title="View in Shopify"
+              >
+                <ExternalLink size={11} />
+                Shopify
+              </button>
+            </div>
+          )
         }
       />
-      <div className="px-4 py-1">
-        <FieldRow label="Name" value={ticket.customer.name} />
-        <FieldRow label="Email" value={ticket.customer.email} />
-        <FieldRow label="User Since" value={ticket.customer.since} />
-      </div>
+
+      {editing ? (
+        <div className="px-4 pt-3 pb-2 space-y-2.5">
+          {[
+            { label: 'Name', key: 'name' },
+            { label: 'Email', key: 'email' },
+            { label: 'Phone', key: 'phone' },
+            { label: 'Address', key: 'address' },
+          ].map(({ label, key }) => (
+            <div key={key}>
+              <p className="text-[10px] font-medium text-[#71717a] mb-1">{label}</p>
+              <Input
+                value={draft[key as keyof typeof draft]}
+                onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
+                className="h-8 text-xs border-[#e4e4e7] focus-visible:border-[#a1a1aa]"
+              />
+            </div>
+          ))}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#18181b] text-white text-xs font-medium hover:bg-zinc-700 transition-colors"
+            >
+              <Check size={12} />
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-[#e4e4e7] bg-white text-[#18181b] text-xs font-medium hover:bg-[#f4f4f5] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="px-4 py-1">
+          <FieldRow label="Name" value={saved.name} />
+          <FieldRow label="Email" value={saved.email} />
+          <FieldRow label="Phone" value={saved.phone} />
+          <FieldRow label="Address" value={saved.address} />
+          <FieldRow label="User Since" value={ticket.customer.since} />
+        </div>
+      )}
 
       {/* Order Details */}
       {ticket.orderDetails && (
@@ -136,7 +218,13 @@ function DetailsTab({ ticket }: { ticket: Ticket }) {
             icon={<ShoppingCart size={14} />}
             label="Order Details"
             actions={
-              <button className="text-[#a1a1aa] hover:text-[#71717a]"><ShoppingBag size={12} /></button>
+              <button
+                className="flex items-center gap-1 h-6 px-2 rounded border border-[#e4e4e7] bg-white text-[#18181b] text-[11px] font-medium hover:bg-[#f4f4f5] transition-colors"
+                title="View in Shopify"
+              >
+                <ExternalLink size={11} />
+                Shopify
+              </button>
             }
           />
           <div className="px-4 py-1">
@@ -238,31 +326,80 @@ function TicketHistoryTab({ ticket }: { ticket: Ticket }) {
   );
 }
 
-export default function DetailPanel({ ticket, onResolve, onArchive }: DetailPanelProps) {
+export default function DetailPanel({
+  ticket,
+  effectiveStatus,
+  isArchived,
+  showResolvedBanner,
+  isSpam,
+  onArchive,
+  onUnarchive,
+  onResolve,
+  onReopen,
+  onMarkSpam,
+  onUnmarkSpam,
+}: DetailPanelProps) {
+  const isClosed = effectiveStatus === 'closed';
+  const activeState = showResolvedBanner ? 'resolved' : isArchived ? 'archived' : isSpam ? 'spam' : null;
+
+  const statusBanner: Record<string, { label: string; action: string; color: string; onUndo: () => void }> = {
+    resolved: { label: 'Ticket resolved — moved to Closed.', action: 'Reopen', color: 'bg-green-50 border-green-200 text-green-800', onUndo: onReopen },
+    archived: { label: 'Ticket archived.', action: 'Unarchive', color: 'bg-amber-50 border-amber-200 text-amber-800', onUndo: onUnarchive },
+    spam: { label: 'Ticket marked as spam.', action: 'Not Spam', color: 'bg-red-50 border-red-200 text-red-800', onUndo: onUnmarkSpam },
+  };
+
   return (
     <div className="w-[400px] shrink-0 flex flex-col h-full border-l border-[#e5e7eb] bg-white overflow-hidden">
 
       {/* Action buttons header */}
       <div className="flex items-center gap-2 px-4 h-[60px] border-b border-[#e5e7eb] shrink-0">
-        <button
-          onClick={onResolve}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#16a34a] text-white text-xs font-medium hover:bg-green-700 transition-colors"
-        >
-          <CircleCheckBig size={14} />
-          Mark Resolved
-        </button>
-        <button
-          onClick={onArchive}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#f4f4f5] text-[#18181b] text-xs font-medium hover:bg-[#e9e9eb] transition-colors"
-        >
-          <Archive size={14} />
-          Archive
-        </button>
-        <button className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#f4f4f5] text-[#18181b] text-xs font-medium hover:bg-[#e9e9eb] transition-colors">
-          <ShieldAlert size={14} />
-          Mark Spam
-        </button>
+        {isClosed ? (
+          <button onClick={onReopen} className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#f4f4f5] text-[#18181b] text-xs font-medium hover:bg-[#e9e9eb] transition-colors">
+            <CircleCheckBig size={14} />
+            Reopen
+          </button>
+        ) : (
+          <button onClick={onResolve} className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#16a34a] text-white text-xs font-medium hover:bg-green-700 transition-colors">
+            <CircleCheckBig size={14} />
+            Mark Resolved
+          </button>
+        )}
+        {isArchived ? (
+          <button onClick={onUnarchive} className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-amber-100 text-amber-800 text-xs font-medium hover:bg-amber-200 transition-colors">
+            <Archive size={14} />
+            Unarchive
+          </button>
+        ) : (
+          <button onClick={onArchive} className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#f4f4f5] text-[#18181b] text-xs font-medium hover:bg-[#e9e9eb] transition-colors">
+            <Archive size={14} />
+            Archive
+          </button>
+        )}
+        {isSpam ? (
+          <button onClick={onUnmarkSpam} className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-red-100 text-red-700 text-xs font-medium hover:bg-red-200 transition-colors">
+            <ShieldAlert size={14} />
+            Not Spam
+          </button>
+        ) : (
+          <button onClick={onMarkSpam} className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#f4f4f5] text-[#18181b] text-xs font-medium hover:bg-[#e9e9eb] transition-colors">
+            <ShieldAlert size={14} />
+            Mark Spam
+          </button>
+        )}
       </div>
+
+      {/* Status banner with undo */}
+      {activeState && (
+        <div className={`flex items-center justify-between px-4 py-2 border-b text-xs font-medium ${statusBanner[activeState].color}`}>
+          <span>{statusBanner[activeState].label}</span>
+          <button
+            onClick={statusBanner[activeState].onUndo}
+            className="underline underline-offset-2 hover:opacity-70 transition-opacity ml-3 shrink-0"
+          >
+            {statusBanner[activeState].action}
+          </button>
+        </div>
+      )}
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">

@@ -43,6 +43,8 @@ export interface Ticket {
   customer: {
     name: string;
     email: string;
+    phone: string;
+    address: string;
     initials: string;
     avatarColor: string;
     since: string;
@@ -71,6 +73,7 @@ export interface Ticket {
   };
   orderHistory: OrderHistoryItem[];
   ticketHistory: TicketHistoryItem[];
+  resolution: string;
 }
 
 export const tickets: Ticket[] = [
@@ -79,6 +82,8 @@ export const tickets: Ticket[] = [
     customer: {
       name: 'James Wright',
       email: 'james.wright@email.com',
+      phone: '+1 (312) 555-0182',
+      address: '84 Elm Street, Chicago, IL 60601',
       initials: 'JW',
       avatarColor: '#475569',
       since: 'Mar 2021',
@@ -163,12 +168,15 @@ export const tickets: Ticket[] = [
       { ticketId: '#4203', subject: 'Item arrived late', date: 'Oct 15, 2025', status: 'resolved' },
       { ticketId: '#3891', subject: 'Discount not applied', date: 'Jul 3, 2025', status: 'resolved' },
     ],
+    resolution: 'Replacement order shipped via express delivery — correct blue hoodie (size M) dispatched. Customer notified with tracking number. No further action required.',
   },
   {
     id: '#5194',
     customer: {
       name: 'Sarah Customer',
       email: 'sarah.c@email.com',
+      phone: '+1 (415) 555-0247',
+      address: '12 Ocean Ave, San Francisco, CA 94102',
       initials: 'SC',
       avatarColor: '#7c3aed',
       since: 'Jan 2023',
@@ -238,12 +246,15 @@ export const tickets: Ticket[] = [
     ticketHistory: [
       { ticketId: '#5180', subject: 'Return request for shoes', date: 'Apr 5, 2026', status: 'resolved' },
     ],
+    resolution: 'Refund of $129.00 confirmed processed on Apr 7th. Customer updated on expected arrival date of Apr 14th. Ticket closed pending receipt confirmation.',
   },
   {
     id: '#5193',
     customer: {
       name: 'Marcus Johnson',
       email: 'marcus.j@email.com',
+      phone: '+1 (901) 555-0391',
+      address: '57 Poplar Blvd, Memphis, TN 38103',
       initials: 'MJ',
       avatarColor: '#0369a1',
       since: 'Nov 2022',
@@ -298,12 +309,15 @@ export const tickets: Ticket[] = [
       { orderId: 'ORD-2024-4700', product: 'USB-C Hub', amount: '$39.99', date: 'Dec 1, 2025', status: 'Delivered' },
     ],
     ticketHistory: [],
+    resolution: 'Carrier investigation raised and reship of laptop stand arranged via express delivery at no cost. New tracking number issued to customer.',
   },
   {
     id: '#5192',
     customer: {
       name: 'Emily Chen',
       email: 'emily.chen@email.com',
+      phone: '+1 (213) 555-0164',
+      address: '229 Sunset Drive, Los Angeles, CA 90028',
       initials: 'EC',
       avatarColor: '#0d9488',
       since: 'Jun 2020',
@@ -359,12 +373,15 @@ export const tickets: Ticket[] = [
     ticketHistory: [
       { ticketId: '#4800', subject: 'Wrong address on order', date: 'Nov 22, 2025', status: 'resolved' },
     ],
+    resolution: 'Customer guided to the Order Summary promo code field. Code SAVE20 applied successfully — 20% discount reflected on order. Ticket closed.',
   },
   {
     id: '#5191',
     customer: {
       name: 'David Park',
       email: 'david.park@email.com',
+      phone: '+1 (503) 555-0478',
+      address: '33 Cedar Lane, Portland, OR 97201',
       initials: 'DP',
       avatarColor: '#b45309',
       since: 'Sep 2024',
@@ -426,12 +443,15 @@ export const tickets: Ticket[] = [
     ticketHistory: [
       { ticketId: '#5052', subject: 'Cancel polo shirt order', date: 'Mar 21, 2026', status: 'resolved' },
     ],
+    resolution: 'Order #ORD-2024-5191 cancellation submitted. Confirmation email sent. Customer advised to reorder in correct colour (white). Ticket closed.',
   },
   {
     id: '#5190',
     customer: {
       name: 'Rachel Torres',
       email: 'rachel.t@email.com',
+      phone: '+1 (737) 555-0523',
+      address: '810 Congress Ave, Austin, TX 78701',
       initials: 'RT',
       avatarColor: '#9333ea',
       since: 'Feb 2022',
@@ -489,12 +509,15 @@ export const tickets: Ticket[] = [
     ticketHistory: [
       { ticketId: '#4562', subject: 'Wrong colour wall clock', date: 'Oct 7, 2025', status: 'resolved' },
     ],
+    resolution: 'Full refund of $149.99 issued to original payment method. Customer asked to dispose of damaged item. Apology and $20 store credit applied as goodwill gesture.',
   },
   {
     id: '#5189',
     customer: {
       name: 'Nina Patel',
       email: 'nina.patel@email.com',
+      phone: '+1 (617) 555-0319',
+      address: '45 Commonwealth Ave, Boston, MA 02215',
       initials: 'NP',
       avatarColor: '#0891b2',
       since: 'Aug 2021',
@@ -541,12 +564,15 @@ export const tickets: Ticket[] = [
       { orderId: 'ORD-2024-4835', product: 'Canvas Backpack', amount: '$78.00', date: 'Jan 20, 2026', status: 'Delivered' },
     ],
     ticketHistory: [],
+    resolution: 'Duplicate charge of $112.00 refunded within 24 hours. Finance team notified. Apology issued and $15 store credit added to account.',
   },
   {
     id: '#5188',
     customer: {
       name: 'Tom Hargreaves',
       email: 'tom.h@email.com',
+      phone: '+1 (206) 555-0437',
+      address: '102 Pine Street, Seattle, WA 98101',
       initials: 'TH',
       avatarColor: '#be185d',
       since: 'May 2023',
@@ -604,12 +630,15 @@ export const tickets: Ticket[] = [
     ticketHistory: [
       { ticketId: '#4725', subject: 'Missing salad servers', date: 'Nov 17, 2025', status: 'resolved' },
     ],
+    resolution: 'Missing items (bamboo cutting board and wine glasses) reshipped same day. Warehouse alerted to packing error. Customer received tracking confirmation.',
   },
   {
     id: '#5187',
     customer: {
       name: 'Grace Liu',
       email: 'grace.liu@email.com',
+      phone: '+1 (773) 555-0256',
+      address: '42 Maple Street, Apt 3B, Chicago, IL 60601',
       initials: 'GL',
       avatarColor: '#16a34a',
       since: 'Mar 2020',
@@ -656,12 +685,15 @@ export const tickets: Ticket[] = [
       { orderId: 'ORD-2024-5010', product: 'Linen Throw Blanket', amount: '$68.00', date: 'Mar 1, 2026', status: 'Delivered' },
     ],
     ticketHistory: [],
+    resolution: 'Delivery address updated to 42 Maple Street, Apt 3B, Chicago, IL 60601 before dispatch. Confirmation email sent to customer.',
   },
   {
     id: '#5186',
     customer: {
       name: 'Oliver Shaw',
       email: 'oliver.s@email.com',
+      phone: '+1 (702) 555-0188',
+      address: '3500 Las Vegas Blvd, Las Vegas, NV 89109',
       initials: 'OS',
       avatarColor: '#7c3aed',
       since: 'Oct 2022',
@@ -714,12 +746,15 @@ export const tickets: Ticket[] = [
       { orderId: 'ORD-2024-4600', product: 'Packing Cubes Set', amount: '$29.00', date: 'Sep 5, 2025', status: 'Delivered' },
     ],
     ticketHistory: [],
+    resolution: 'Replacement travel bag dispatched under 12-month warranty. Photo of faulty zipper received and forwarded to QA team. Customer notified of shipment.',
   },
   {
     id: '#5185',
     customer: {
       name: 'Fatima Al-Hassan',
       email: 'fatima.ah@email.com',
+      phone: '+1 (212) 555-0394',
+      address: '560 5th Avenue, New York, NY 10036',
       initials: 'FA',
       avatarColor: '#d97706',
       since: 'Jul 2019',
@@ -775,12 +810,15 @@ export const tickets: Ticket[] = [
     ticketHistory: [
       { ticketId: '#5101', subject: 'Cardigan colour mismatch', date: 'Mar 16, 2026', status: 'resolved' },
     ],
+    resolution: 'Account email corrected from fatima.al-hassan@email.com to fatima.ah@email.com. Order confirmation and tracking details resent successfully.',
   },
   {
     id: '#5184',
     customer: {
       name: 'Liam Foster',
       email: 'liam.foster@email.com',
+      phone: '+1 (305) 555-0271',
+      address: '78 Biscayne Blvd, Miami, FL 33132',
       initials: 'LF',
       avatarColor: '#0369a1',
       since: 'Dec 2023',
@@ -817,12 +855,15 @@ export const tickets: Ticket[] = [
       { orderId: 'SUB-4421-FEB', product: 'Monthly Coffee Bundle', amount: '$45.00', date: 'Feb 20, 2026', status: 'Delivered' },
     ],
     ticketHistory: [],
+    resolution: 'Subscription SUB-4421 cancelled effective immediately. Customer confirmed no further charges will occur. Cancellation confirmation email sent.',
   },
   {
     id: '#5183',
     customer: {
       name: 'Chloe Nguyen',
       email: 'chloe.n@email.com',
+      phone: '+1 (404) 555-0342',
+      address: '195 Peachtree St NE, Atlanta, GA 30303',
       initials: 'CN',
       avatarColor: '#dc2626',
       since: 'Apr 2021',
@@ -876,12 +917,15 @@ export const tickets: Ticket[] = [
       { orderId: 'ORD-2024-4890', product: 'Moisturiser Bundle', amount: '$48.00', date: 'Jan 14, 2026', status: 'Delivered' },
     ],
     ticketHistory: [],
+    resolution: 'Gift wrap fee of $8.00 refunded and $15 store credit issued as goodwill. Packing team notified to prevent recurrence. Ticket closed.',
   },
   {
     id: '#5182',
     customer: {
       name: 'Arjun Mehta',
       email: 'arjun.m@email.com',
+      phone: '+1 (480) 555-0167',
+      address: '2100 Mill Ave, Tempe, AZ 85281',
       initials: 'AM',
       avatarColor: '#059669',
       since: 'Jun 2022',
@@ -934,12 +978,15 @@ export const tickets: Ticket[] = [
       { orderId: 'ORD-2024-4950', product: 'Phone Stand', amount: '$18.00', date: 'Feb 25, 2026', status: 'Delivered' },
     ],
     ticketHistory: [],
+    resolution: 'Customer informed of known tracking sync delay in mobile app. Tech team alerted. Order confirmed in transit — customer reassured.',
   },
   {
     id: '#5181',
     customer: {
       name: 'Zara Mitchell',
       email: 'zara.m@email.com',
+      phone: '+1 (214) 555-0489',
+      address: '1401 Elm Street, Dallas, TX 75202',
       initials: 'ZM',
       avatarColor: '#9333ea',
       since: 'Nov 2020',
@@ -987,12 +1034,15 @@ export const tickets: Ticket[] = [
     ticketHistory: [
       { ticketId: '#4815', subject: 'Jacket size exchange', date: 'Jan 12, 2026', status: 'resolved' },
     ],
+    resolution: 'Return label regenerated and resent to zara.m@email.com. Email delivery confirmed. Customer acknowledged receipt. Return shipment pending.',
   },
   {
     id: '#5180',
     customer: {
       name: 'Ben Okafor',
       email: 'ben.o@email.com',
+      phone: '+1 (713) 555-0316',
+      address: '600 Travis Street, Houston, TX 77002',
       initials: 'BO',
       avatarColor: '#475569',
       since: 'Aug 2023',
@@ -1045,6 +1095,7 @@ export const tickets: Ticket[] = [
       { orderId: 'ORD-2024-4940', product: 'Crew Socks Pack', amount: '$14.00', date: 'Feb 20, 2026', status: 'Delivered' },
     ],
     ticketHistory: [],
+    resolution: 'Size exchange processed — size 11 dispatched on receipt of size 10 return. Return label sent. $10 goodwill credit applied to account.',
   },
 ];
 

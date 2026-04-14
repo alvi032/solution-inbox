@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Ticket, rewriteSamples } from '@/lib/data';
+import { Ticket, Category, rewriteSamples } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,11 +31,18 @@ import {
   Paperclip,
   ChevronLeft,
   ChevronRight,
+  CircleCheckBig,
+  RotateCcw,
 } from 'lucide-react';
 
 interface ChatPanelProps {
   ticket: Ticket;
   onClose: () => void;
+  ticketIndex: number;
+  ticketTotal: number;
+  onNavigate: (dir: 'prev' | 'next') => void;
+  effectiveStatus: 'open' | 'closed';
+  onReopen: () => void;
 }
 
 function MessageBubble({ message }: { message: Ticket['messages'][0] }) {
@@ -57,6 +65,14 @@ function MessageBubble({ message }: { message: Ticket['messages'][0] }) {
   );
 }
 
+const categoryStyles: Record<Category, string> = {
+  Order: 'bg-[#ede9fe] text-[#5b21b6] border-[#ede9fe]',
+  Refund: 'bg-[#fef3c7] text-[#92400e] border-[#fef3c7]',
+  'Shipping Issue': 'bg-[#dbeafe] text-[#1e40af] border-[#dbeafe]',
+  General: 'bg-[#dbfedd] text-[#0f6229] border-[#dbfedd]',
+  'Order Cancellation': 'bg-[#ede9fe] text-[#5b21b6] border-[#ede9fe]',
+};
+
 const quickActionResponses: Record<string, string> = {
   'Replace Product': "Hi, I've arranged for the correct item to be shipped out with express delivery. You'll receive a tracking confirmation shortly. Apologies for the inconvenience!",
   'Full Refund ($89.99)': "I've processed a full refund of $89.99 to your original payment method. Please allow 3–5 business days for it to appear. I apologise for the trouble caused.",
@@ -78,7 +94,7 @@ const quickActionResponses: Record<string, string> = {
   'Request Photos': "Could you please share photos of the damage? This will help us file a claim with the carrier and ensure this doesn't happen again.",
 };
 
-export default function ChatPanel({ ticket, onClose }: ChatPanelProps) {
+export default function ChatPanel({ ticket, onClose, ticketIndex, ticketTotal, onNavigate, effectiveStatus, onReopen }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState(ticket.messages);
   const [actionsExpanded, setActionsExpanded] = useState(false);
@@ -126,21 +142,36 @@ export default function ChatPanel({ ticket, onClose }: ChatPanelProps) {
   return (
     <div className="flex flex-col flex-1 h-full bg-white min-w-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 h-12 border-b border-[#e5e7eb] shrink-0">
+      <div className="flex items-center justify-between px-4 h-12 border-b border-[#e5e7eb] shrink-0 gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-sm font-medium text-[#18181b] truncate">{ticket.subject}</h2>
-          <span className="text-xs text-[#3f3f46] shrink-0">Ticket {ticket.id}</span>
+          <span className="text-xs text-[#a1a1aa] shrink-0">·</span>
+          <span className="text-xs text-[#71717a] shrink-0">Ticket {ticket.id}</span>
+          <Badge
+            variant="outline"
+            className={cn('shrink-0 rounded-full text-[10px] px-2 py-0 font-medium border-0', categoryStyles[ticket.category])}
+          >
+            {ticket.category}
+          </Badge>
         </div>
-        {/* Pagination */}
+        {/* Navigation counter */}
         <div className="flex items-center gap-1 shrink-0">
-          <button className="w-8 h-8 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] transition-colors">
-            <ChevronLeft size={15} />
+          <button
+            onClick={() => onNavigate('prev')}
+            disabled={ticketTotal <= 1}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          >
+            <ChevronLeft size={14} />
           </button>
-          <div className="w-20 h-8 flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-xs text-[#18181b]">
-            3 / 144
+          <div className="h-7 px-2.5 flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-xs text-[#18181b] tabular-nums">
+            {ticketIndex + 1} / {ticketTotal}
           </div>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] transition-colors">
-            <ChevronRight size={15} />
+          <button
+            onClick={() => onNavigate('next')}
+            disabled={ticketTotal <= 1}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          >
+            <ChevronRight size={14} />
           </button>
         </div>
       </div>
@@ -153,7 +184,32 @@ export default function ChatPanel({ ticket, onClose }: ChatPanelProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Compose area */}
+      {/* Ticket conclusion (closed) or compose area (open) */}
+      {effectiveStatus === 'closed' ? (
+        <div className="border-t border-[#e5e7eb] bg-[#fafafa] p-4 shrink-0">
+          <div className="border border-[#e4e4e7] rounded-lg bg-white overflow-hidden">
+            {/* Conclusion header */}
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#f4f4f5] bg-green-50">
+              <CircleCheckBig size={15} className="text-green-600 shrink-0" />
+              <span className="text-sm font-semibold text-green-800">Ticket Resolved</span>
+            </div>
+            {/* Resolution text */}
+            <div className="px-4 py-3">
+              <p className="text-sm text-[#18181b] leading-relaxed">{ticket.resolution}</p>
+            </div>
+            {/* Reopen CTA */}
+            <div className="px-4 pb-3">
+              <button
+                onClick={onReopen}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-[#e4e4e7] bg-white text-[#18181b] text-xs font-medium hover:bg-[#f4f4f5] transition-colors"
+              >
+                <RotateCcw size={13} />
+                Reopen Ticket
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="border-t border-[#e5e7eb] bg-[#fafafa] p-3 shrink-0">
         <div className="border border-[#e4e4e7] rounded-lg bg-white overflow-hidden focus-within:border-[#a1a1aa] transition-colors">
 
@@ -267,6 +323,7 @@ export default function ChatPanel({ ticket, onClose }: ChatPanelProps) {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

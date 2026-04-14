@@ -5,7 +5,8 @@ import { tickets, Ticket, Category } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Eye, Archive, SquareCheckBig } from 'lucide-react';
+import { Search, Eye, Archive, SquareCheckBig } from 'lucide-react';
+import FilterButton, { FilterState } from '@/components/filter-panel';
 
 // The logged-in user — tickets assigned to this name appear under "My Tickets"
 const CURRENT_USER = 'Sarah Jones';
@@ -34,7 +35,10 @@ interface TicketListProps {
   narrow?: boolean;
   activeView: string;
   archivedIds: Set<string>;
+  spamIds: Set<string>;
+  statusOverrides: Record<string, 'open' | 'closed'>;
   onArchive: (id: string) => void;
+  onFilteredChange?: (tickets: Ticket[]) => void;
 }
 
 function AgentPicker({
@@ -95,11 +99,17 @@ function WideTicketRow({
   isSelected,
   onSelect,
   onArchive,
+  effectiveStatus,
+  isArchived,
+  isSpam,
 }: {
   ticket: Ticket;
   isSelected: boolean;
   onSelect: () => void;
   onArchive: () => void;
+  effectiveStatus: 'open' | 'closed';
+  isArchived: boolean;
+  isSpam: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const [showAgentPicker, setShowAgentPicker] = useState(false);
@@ -110,7 +120,7 @@ function WideTicketRow({
       className={cn(
         'relative flex items-center gap-4 px-4 py-3 border-b border-[#f4f4f5] cursor-pointer transition-colors',
         ticket.priority === 'high' ? 'border-l-4 border-l-[#ff6666]' : 'border-l-4 border-l-transparent',
-        isSelected ? 'bg-[#f4f4f5]' : 'bg-[#fafafa] hover:bg-white'
+        isSelected ? 'bg-[#f4f4f5]' : isArchived ? 'bg-[#fefce8] hover:bg-[#fef9c3]' : isSpam ? 'bg-[#fff5f5] hover:bg-[#fee2e2]' : effectiveStatus === 'closed' ? 'bg-[#f0fdf4] hover:bg-[#ecfdf5]' : 'bg-[#fafafa] hover:bg-white'
       )}
       onClick={onSelect}
       onMouseEnter={() => setHovered(true)}
@@ -138,9 +148,9 @@ function WideTicketRow({
         </Badge>
       </div>
 
-      {/* Assignee (w-[100px]) — hover shows agent picker */}
+      {/* Assignee (w-[120px]) — wide enough for "Unassigned" without truncation */}
       <div
-        className="relative w-[100px] shrink-0"
+        className="relative w-[120px] shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -156,7 +166,7 @@ function WideTicketRow({
           >
             {assignee.initials}
           </div>
-          <span className="text-xs text-[#71717a]">{assignee.name}</span>
+          <span className="text-xs text-[#71717a] truncate">{assignee.name}</span>
         </button>
         {showAgentPicker && (
           <AgentPicker
@@ -197,8 +207,8 @@ function WideTicketRow({
         </button>
       </div>
 
-      {/* Timestamp (w-[70px]) */}
-      <div className="w-[70px] shrink-0 text-right">
+      {/* Timestamp (w-[100px]) */}
+      <div className="w-[100px] shrink-0 text-right">
         <span className="text-sm text-[#3f3f46]">{ticket.timestamp}</span>
       </div>
     </div>
@@ -251,13 +261,17 @@ function getViewTitle(activeView: string): string {
     'My Tickets': 'My Tickets',
     Unassigned: 'Unassigned',
     Archived: 'Archived',
+    Spam: 'Spam',
   };
   return titles[activeView] ?? activeView;
 }
 
-export default function TicketList({ selectedId, onSelect, narrow, activeView, archivedIds, onArchive }: TicketListProps) {
+const VIEWS_WITHOUT_TABS = ['Archived', 'Spam'];
+
+export default function TicketList({ selectedId, onSelect, narrow, activeView, archivedIds, spamIds, statusOverrides, onArchive, onFilteredChange }: TicketListProps) {
   const [tab, setTab] = useState<TabFilter>('All');
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<FilterState>({});
 
   // Reset tab and search when switching views
   useEffect(() => {
@@ -265,26 +279,65 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
     setSearch('');
   }, [activeView]);
 
+  const effectiveStatus = (t: Ticket): 'open' | 'closed' => statusOverrides[t.id] ?? t.status;
+
   // Base tickets for the current view (before tab + search)
   const viewTickets = useMemo(() => tickets.filter((t) => {
     if (activeView === 'Archived') return archivedIds.has(t.id);
-    if (archivedIds.has(t.id)) return false;
+    if (activeView === 'Spam') return spamIds.has(t.id);
+    // Normal views exclude archived and spam
+    if (archivedIds.has(t.id) || spamIds.has(t.id)) return false;
     if (activeView === 'My Tickets') return t.assignee === CURRENT_USER;
     if (activeView === 'Unassigned') return t.assignee === 'Unassigned';
     return true;
-  }), [activeView, archivedIds]);
+  }), [activeView, archivedIds, spamIds]);
 
-  // Counts per tab
+  // Counts per tab — use effective status
   const counts = useMemo(() => ({
     All: viewTickets.length,
-    Open: viewTickets.filter((t) => t.status === 'open').length,
-    Closed: viewTickets.filter((t) => t.status === 'closed').length,
-  }), [viewTickets]);
+    Open: viewTickets.filter((t) => effectiveStatus(t) === 'open').length,
+    Closed: viewTickets.filter((t) => effectiveStatus(t) === 'closed').length,
+  }), [viewTickets, statusOverrides]);
 
   const filtered = viewTickets.filter((t) => {
+    const status = effectiveStatus(t);
+
     // Tab filter
-    if (tab === 'Open' && t.status !== 'open') return false;
-    if (tab === 'Closed' && t.status !== 'closed') return false;
+    if (tab === 'Open' && status !== 'open') return false;
+    if (tab === 'Closed' && status !== 'closed') return false;
+
+    // Status filter panel
+    const statusFilter = filters.status ?? [];
+    if (statusFilter.length > 0) {
+      const wantOpen = statusFilter.includes('Open');
+      const wantClosed = statusFilter.includes('Closed');
+      if (wantOpen && !wantClosed && status !== 'open') return false;
+      if (wantClosed && !wantOpen && status !== 'closed') return false;
+    }
+
+    // Priority filter
+    const priorityFilter = filters.priority ?? [];
+    if (priorityFilter.length > 0) {
+      const wantHigh = priorityFilter.includes('High');
+      const wantLow = priorityFilter.includes('Low');
+      if (wantHigh && !wantLow && t.priority !== 'high') return false;
+      if (wantLow && !wantHigh && t.priority !== 'normal') return false;
+    }
+
+    // Type filter
+    const typeFilter = filters.type ?? [];
+    if (typeFilter.length > 0 && !typeFilter.includes(t.category)) return false;
+
+    // Assignee filter
+    const assigneeFilter = filters.assignee ?? [];
+    if (assigneeFilter.length > 0) {
+      const matchesAssigned = assigneeFilter.includes('Assigned to me') && t.assignee === CURRENT_USER;
+      const matchesUnassigned = assigneeFilter.includes('Unassigned') && t.assignee === 'Unassigned';
+      const matchesNamed = assigneeFilter.some((a) =>
+        a !== 'Assigned to me' && a !== 'Unassigned' && t.assignee === a
+      );
+      if (!matchesAssigned && !matchesUnassigned && !matchesNamed) return false;
+    }
 
     // Search
     if (
@@ -297,14 +350,18 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
     return true;
   });
 
+  useEffect(() => {
+    onFilteredChange?.(filtered);
+  }, [filtered]);
+
   return (
     <div className={cn('flex flex-col h-full border-r border-[#e5e7eb] bg-[#fafafa]', narrow ? 'w-[300px] shrink-0' : 'flex-1 min-w-0')}>
       {/* Header */}
       <div className="flex flex-col gap-3.5 px-4 pt-4 pb-3 border-b border-[#e5e7eb] shrink-0">
-        {/* Row 1: Title + Tabs */}
+        {/* Row 1: Title + Tabs (wide) */}
         <div className="flex items-center justify-between">
           <h2 className="text-base font-medium text-[#18181b]">{getViewTitle(activeView)}</h2>
-          {activeView !== 'Archived' && (
+          {!narrow && !VIEWS_WITHOUT_TABS.includes(activeView) && (
             <div className="flex items-center rounded-md border border-[#e5e7eb] overflow-hidden bg-[#f4f4f5]">
               {(['All', 'Open', 'Closed'] as TabFilter[]).map((t) => (
                 <button
@@ -339,10 +396,32 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
               className="pl-8 h-8 text-sm bg-white border-[#e5e7eb] focus-visible:border-[#a1a1aa] rounded-md"
             />
           </div>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#71717a] hover:text-[#18181b] transition-colors shrink-0">
-            <Filter size={14} />
-          </button>
+          <FilterButton filters={filters} onChange={setFilters} />
         </div>
+
+        {/* Row 3: Tabs (narrow — below search) */}
+        {narrow && !VIEWS_WITHOUT_TABS.includes(activeView) && (
+          <div className="flex items-center rounded-md border border-[#e5e7eb] overflow-hidden bg-[#f4f4f5]">
+            {(['All', 'Open', 'Closed'] as TabFilter[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  'flex items-center justify-center gap-1.5 flex-1 h-6 text-sm font-medium transition-colors',
+                  tab === t ? 'bg-white text-[#18181b]' : 'text-[#71717a] hover:text-[#18181b]'
+                )}
+              >
+                {t}
+                <span className={cn(
+                  'text-[10px] font-semibold tabular-nums',
+                  tab === t ? 'text-[#71717a]' : 'text-[#a1a1aa]'
+                )}>
+                  {counts[t]}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Ticket rows */}
@@ -365,6 +444,9 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
                 isSelected={ticket.id === selectedId}
                 onSelect={() => onSelect(ticket)}
                 onArchive={() => onArchive(ticket.id)}
+                effectiveStatus={effectiveStatus(ticket)}
+                isArchived={archivedIds.has(ticket.id)}
+                isSpam={spamIds.has(ticket.id)}
               />
             )
           )
