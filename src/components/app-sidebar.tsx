@@ -7,32 +7,38 @@ import { cn } from '@/lib/utils';
 import {
   BarChart2,
   Inbox,
-  Network,
-  Settings2,
-  Plug,
+  ShoppingBag,
+  Search,
+  HelpCircle,
+  BookOpen,
   UsersRound,
   PanelLeft,
   ChevronDown,
   Command,
-  LayoutGrid,
-  BarChart,
-  Sliders,
+  FileQuestion,
 } from 'lucide-react';
 
 export default function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [evoSearchInstalled, setEvoSearchInstalled] = useState(false);
+  const [quizzesInstalled, setQuizzesInstalled] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     setEvoSearchInstalled(localStorage.getItem('evoSearchInstalled') === 'true');
-    const onInstall = () => setEvoSearchInstalled(true);
-    const onReset = () => setEvoSearchInstalled(false);
-    window.addEventListener('evo-search-installed', onInstall);
-    window.addEventListener('evo-search-reset', onReset);
+    setQuizzesInstalled(localStorage.getItem('quizzesInstalled') === 'true');
+
+    const onEvoInstall = () => setEvoSearchInstalled(true);
+    const onEvoReset = () => setEvoSearchInstalled(false);
+    const onQuizzesInstall = () => setQuizzesInstalled(true);
+
+    window.addEventListener('evo-search-installed', onEvoInstall);
+    window.addEventListener('evo-search-reset', onEvoReset);
+    window.addEventListener('quizzes-installed', onQuizzesInstall);
     return () => {
-      window.removeEventListener('evo-search-installed', onInstall);
-      window.removeEventListener('evo-search-reset', onReset);
+      window.removeEventListener('evo-search-installed', onEvoInstall);
+      window.removeEventListener('evo-search-reset', onEvoReset);
+      window.removeEventListener('quizzes-installed', onQuizzesInstall);
     };
   }, []);
 
@@ -73,6 +79,7 @@ export default function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex flex-col gap-2 px-2 pb-2 flex-1 overflow-y-auto">
+
         {/* Dashboard */}
         <div className="flex flex-col gap-0.5 mt-6">
           <Link
@@ -91,132 +98,94 @@ export default function AppSidebar() {
           </Link>
         </div>
 
-        {/* Support Agent */}
+        {/* Apps */}
         <div className="flex flex-col gap-0.5 mt-6">
           {!collapsed && (
-            <p className="px-2 pt-1 text-xs font-medium text-[#3f3f46]/70">Support Agent</p>
+            <p className="px-2 pt-1 text-xs font-medium text-[#3f3f46]/70">Apps</p>
           )}
           {collapsed && <div className="border-t border-[#e5e7eb] my-1" />}
+
+          {/* Support Agent */}
           <Link
             href="/inbox"
             className={cn(
               'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
-              pathname === '/inbox'
+              pathname.startsWith('/inbox')
                 ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
                 : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
               collapsed && 'justify-center px-0'
             )}
-            title={collapsed ? 'Support Inbox' : undefined}
+            title={collapsed ? 'Support Agent' : undefined}
           >
             <Inbox size={16} className="shrink-0" />
-            {!collapsed && <span>Support Inbox</span>}
+            {!collapsed && <span>Support Agent</span>}
           </Link>
+
+          {/* Sales Agent */}
           <button
             className={cn(
               'flex items-center gap-2 rounded-md px-2 h-8 text-sm text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
               collapsed && 'justify-center px-0'
             )}
-            title={collapsed ? 'Workflows' : undefined}
+            title={collapsed ? 'Sales Agent' : undefined}
           >
-            <Network size={16} className="shrink-0" />
-            {!collapsed && <span>Workflows</span>}
+            <ShoppingBag size={16} className="shrink-0" />
+            {!collapsed && <span>Sales Agent</span>}
           </button>
+
+          {/* Evo Search */}
+          <Link
+            href={evoSearchInstalled ? '/evo-search/analytics' : '/evo-search/install'}
+            className={cn(
+              'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
+              pathname.startsWith('/evo-search')
+                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+              collapsed && 'justify-center px-0'
+            )}
+            title={collapsed ? 'Evo Search' : undefined}
+          >
+            <Search size={16} className="shrink-0" />
+            {!collapsed && <span>Evo Search</span>}
+          </Link>
+
+          {/* Quizzes */}
+          <Link
+            href={quizzesInstalled ? '/quizzes' : '/quizzes/install'}
+            className={cn(
+              'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
+              pathname.startsWith('/quizzes')
+                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+              collapsed && 'justify-center px-0'
+            )}
+            title={collapsed ? 'Quizzes' : undefined}
+          >
+            <FileQuestion size={16} className="shrink-0" />
+            {!collapsed && <span>Quizzes</span>}
+          </Link>
         </div>
 
-        {/* Sales Agent */}
+        {/* Knowledge Base */}
         <div className="flex flex-col gap-0.5 mt-6">
-          {!collapsed && (
-            <p className="px-2 pt-1 text-xs font-medium text-[#3f3f46]/70">Sales Agent</p>
-          )}
           {collapsed && <div className="border-t border-[#e5e7eb] my-1" />}
           <button
             className={cn(
               'flex items-center gap-2 rounded-md px-2 h-8 text-sm text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
               collapsed && 'justify-center px-0'
             )}
-            title={collapsed ? 'Workflows' : undefined}
+            title={collapsed ? 'Knowledge Base' : undefined}
           >
-            <Network size={16} className="shrink-0" />
-            {!collapsed && <span>Workflows</span>}
-          </button>
-          <button
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-sm text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Configure' : undefined}
-          >
-            <Settings2 size={16} className="shrink-0" />
-            {!collapsed && <span>Configure</span>}
+            <BookOpen size={16} className="shrink-0" />
+            {!collapsed && <span>Knowledge Base</span>}
           </button>
         </div>
 
-        {/* Evo Search — shown only after install */}
-        {evoSearchInstalled && (
-          <div className="flex flex-col gap-0.5 mt-6">
-            {!collapsed && (
-              <p className="px-2 pt-1 text-xs font-medium text-[#3f3f46]/70">Evo Search</p>
-            )}
-            {collapsed && <div className="border-t border-[#e5e7eb] my-1" />}
-            <Link
-              href="/evo-search/analytics"
-              className={cn(
-                'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
-                pathname === '/evo-search/analytics'
-                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                collapsed && 'justify-center px-0'
-              )}
-              title={collapsed ? 'Analytics' : undefined}
-            >
-              <BarChart size={16} className="shrink-0" />
-              {!collapsed && <span>Analytics</span>}
-            </Link>
-            <Link
-              href="/evo-search/widget"
-              className={cn(
-                'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
-                pathname === '/evo-search/widget'
-                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                collapsed && 'justify-center px-0'
-              )}
-              title={collapsed ? 'Widget Customization' : undefined}
-            >
-              <Sliders size={16} className="shrink-0" />
-              {!collapsed && <span>Widget Customization</span>}
-            </Link>
-          </div>
-        )}
       </nav>
 
       {/* Footer */}
       <div className="border-t border-[#e5e7eb] bg-[#fafafa] p-2 shrink-0">
         <div className="flex flex-col gap-0.5 mb-2">
-          <Link
-            href="/apps"
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-xs transition-colors',
-              pathname === '/apps'
-                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Apps and Plugins' : undefined}
-          >
-            <LayoutGrid size={16} className="shrink-0" />
-            {!collapsed && <span>Apps and Plugins</span>}
-          </Link>
-          <button
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-xs text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Integrations' : undefined}
-          >
-            <Plug size={16} className="shrink-0" />
-            {!collapsed && <span>Integrations</span>}
-          </button>
           <button
             className={cn(
               'flex items-center gap-2 rounded-md px-2 h-8 text-xs text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
@@ -226,6 +195,16 @@ export default function AppSidebar() {
           >
             <UsersRound size={16} className="shrink-0" />
             {!collapsed && <span>Team</span>}
+          </button>
+          <button
+            className={cn(
+              'flex items-center gap-2 rounded-md px-2 h-8 text-xs text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
+              collapsed && 'justify-center px-0'
+            )}
+            title={collapsed ? 'Support' : undefined}
+          >
+            <HelpCircle size={16} className="shrink-0" />
+            {!collapsed && <span>Support</span>}
           </button>
         </div>
 

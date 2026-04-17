@@ -299,7 +299,7 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
     Closed: viewTickets.filter((t) => effectiveStatus(t) === 'closed').length,
   }), [viewTickets, statusOverrides]);
 
-  const filtered = viewTickets.filter((t) => {
+  const filtered = useMemo(() => viewTickets.filter((t) => {
     const status = effectiveStatus(t);
 
     // Tab filter
@@ -348,7 +348,7 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
       return false;
 
     return true;
-  });
+  }), [viewTickets, tab, filters, search, statusOverrides]);
 
   useEffect(() => {
     onFilteredChange?.(filtered);
