@@ -14,6 +14,8 @@ import {
   PanelLeft,
   Plus,
   Sparkles,
+  Network,
+  CreditCard,
 } from 'lucide-react';
 import CreateSmartViewDialog, { SmartView, ICON_OPTIONS } from './create-smart-view-dialog';
 
@@ -178,6 +180,30 @@ export default function Sidebar({ collapsed, onToggle, activeView = 'Inbox', onV
           </div>
 
         </nav>
+
+        {/* Workflows + Billing footer */}
+        <div className="border-t border-[#e5e7eb] p-2 shrink-0">
+          <button
+            className={cn(
+              'flex items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors w-full text-left text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+              collapsed && 'justify-center px-0'
+            )}
+            title={collapsed ? 'Workflows' : undefined}
+          >
+            <span className="shrink-0"><Network size={16} /></span>
+            {!collapsed && <span className="flex-1 truncate">Workflows</span>}
+          </button>
+          <button
+            className={cn(
+              'flex items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors w-full text-left text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+              collapsed && 'justify-center px-0'
+            )}
+            title={collapsed ? 'Billing' : undefined}
+          >
+            <span className="shrink-0"><CreditCard size={16} /></span>
+            {!collapsed && <span className="flex-1 truncate">Billing</span>}
+          </button>
+        </div>
       </div>
 
       <CreateSmartViewDialog
