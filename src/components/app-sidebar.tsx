@@ -18,15 +18,26 @@ import {
   FileQuestion,
 } from 'lucide-react';
 
+export type DashboardView = 'admin' | 'agent';
+
+const STORAGE_KEY = 'dashboardView';
+
+export function getDashboardView(): DashboardView {
+  if (typeof window === 'undefined') return 'admin';
+  return (localStorage.getItem(STORAGE_KEY) as DashboardView) ?? 'admin';
+}
+
 export default function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [evoSearchInstalled, setEvoSearchInstalled] = useState(false);
   const [quizzesInstalled, setQuizzesInstalled] = useState(false);
+  const [dashboardView, setDashboardViewState] = useState<DashboardView>('admin');
   const pathname = usePathname();
 
   useEffect(() => {
     setEvoSearchInstalled(localStorage.getItem('evoSearchInstalled') === 'true');
     setQuizzesInstalled(localStorage.getItem('quizzesInstalled') === 'true');
+    setDashboardViewState(getDashboardView());
 
     const onEvoInstall = () => setEvoSearchInstalled(true);
     const onEvoReset = () => setEvoSearchInstalled(false);
@@ -41,6 +52,12 @@ export default function AppSidebar() {
       window.removeEventListener('quizzes-installed', onQuizzesInstall);
     };
   }, []);
+
+  function toggleView(view: DashboardView) {
+    setDashboardViewState(view);
+    localStorage.setItem(STORAGE_KEY, view);
+    window.dispatchEvent(new CustomEvent('dashboard-view-change', { detail: view }));
+  }
 
   return (
     <div
@@ -122,16 +139,20 @@ export default function AppSidebar() {
           </Link>
 
           {/* Sales Agent */}
-          <button
+          <Link
+            href="/sales-agent/analytics"
             className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-sm text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
+              'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
+              pathname.startsWith('/sales-agent')
+                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
               collapsed && 'justify-center px-0'
             )}
             title={collapsed ? 'Sales Agent' : undefined}
           >
             <ShoppingBag size={16} className="shrink-0" />
             {!collapsed && <span>Sales Agent</span>}
-          </button>
+          </Link>
 
           {/* Evo Search */}
           <Link
@@ -185,6 +206,67 @@ export default function AppSidebar() {
 
       {/* Footer */}
       <div className="border-t border-[#e5e7eb] bg-[#fafafa] p-2 shrink-0">
+
+        {/* Admin / Agent toggle */}
+        {!collapsed && (
+          <div className="mb-3">
+            <p className="px-2 text-[10px] font-medium text-[#a1a1aa] uppercase tracking-wide mb-1.5">Dashboard view</p>
+            <div className="flex items-center bg-[#f4f4f5] rounded-lg p-0.5 gap-0.5">
+              <button
+                onClick={() => toggleView('admin')}
+                className={cn(
+                  'flex-1 text-xs font-medium rounded-md px-2 py-1.5 transition-all',
+                  dashboardView === 'admin'
+                    ? 'bg-white text-[#18181b] shadow-sm'
+                    : 'text-[#71717a] hover:text-[#3f3f46]'
+                )}
+              >
+                Admin
+              </button>
+              <button
+                onClick={() => toggleView('agent')}
+                className={cn(
+                  'flex-1 text-xs font-medium rounded-md px-2 py-1.5 transition-all',
+                  dashboardView === 'agent'
+                    ? 'bg-white text-[#18181b] shadow-sm'
+                    : 'text-[#71717a] hover:text-[#3f3f46]'
+                )}
+              >
+                Agent
+              </button>
+            </div>
+          </div>
+        )}
+
+        {collapsed && (
+          <div className="flex flex-col gap-0.5 mb-2">
+            <button
+              onClick={() => toggleView('admin')}
+              className={cn(
+                'w-full h-7 rounded-md text-[10px] font-bold transition-colors',
+                dashboardView === 'admin'
+                  ? 'bg-[#18181b] text-white'
+                  : 'text-[#71717a] hover:bg-[#f4f4f5]'
+              )}
+              title="Admin view"
+            >
+              A
+            </button>
+            <button
+              onClick={() => toggleView('agent')}
+              className={cn(
+                'w-full h-7 rounded-md text-[10px] font-bold transition-colors',
+                dashboardView === 'agent'
+                  ? 'bg-[#18181b] text-white'
+                  : 'text-[#71717a] hover:bg-[#f4f4f5]'
+              )}
+              title="Agent view"
+            >
+              Ag
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col gap-0.5 mb-2">
           <button
             className={cn(

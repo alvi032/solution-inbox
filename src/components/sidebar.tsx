@@ -16,7 +16,10 @@ import {
   Sparkles,
   Network,
   CreditCard,
+  BarChart2,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import CreateSmartViewDialog, { SmartView, ICON_OPTIONS } from './create-smart-view-dialog';
 
 interface SidebarProps {
@@ -49,6 +52,7 @@ function SmartViewIcon({ iconName, size = 14 }: { iconName: string; size?: numbe
 export default function Sidebar({ collapsed, onToggle, activeView = 'Inbox', onViewChange }: SidebarProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [customViews, setCustomViews] = useState<SmartView[]>([]);
+  const pathname = usePathname();
 
   const allSmartViews = [...defaultSmartViews, ...customViews];
 
@@ -183,6 +187,20 @@ export default function Sidebar({ collapsed, onToggle, activeView = 'Inbox', onV
 
         {/* Workflows + Billing footer */}
         <div className="border-t border-[#e5e7eb] p-2 shrink-0">
+          <Link
+            href="/inbox/analytics"
+            className={cn(
+              'flex items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors w-full text-left',
+              pathname === '/inbox/analytics'
+                ? 'bg-[#f4f4f5] text-[#18181b]'
+                : 'text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+              collapsed && 'justify-center px-0'
+            )}
+            title={collapsed ? 'Analytics' : undefined}
+          >
+            <span className="shrink-0"><BarChart2 size={16} /></span>
+            {!collapsed && <span className="flex-1 truncate">Analytics</span>}
+          </Link>
           <button
             className={cn(
               'flex items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors w-full text-left text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]',
