@@ -268,16 +268,20 @@ export default function AppSidebar() {
         )}
 
         <div className="flex flex-col gap-0.5 mb-2">
-          <button
+          <Link
+            href="/team"
             className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-xs text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
+              'flex items-center gap-2 rounded-md px-2 h-8 text-xs transition-colors',
+              pathname === '/team'
+                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
               collapsed && 'justify-center px-0'
             )}
             title={collapsed ? 'Team' : undefined}
           >
             <UsersRound size={16} className="shrink-0" />
             {!collapsed && <span>Team</span>}
-          </button>
+          </Link>
           <button
             className={cn(
               'flex items-center gap-2 rounded-md px-2 h-8 text-xs text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
