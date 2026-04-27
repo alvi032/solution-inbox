@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -17,10 +17,26 @@ import {
   Network,
   CreditCard,
   BarChart2,
+  ChevronDown,
+  ShoppingBag,
+  Search,
+  FileQuestion,
+  BookOpen,
+  HelpCircle,
+  UsersRound,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import CreateSmartViewDialog, { SmartView, ICON_OPTIONS } from './create-smart-view-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -52,7 +68,15 @@ function SmartViewIcon({ iconName, size = 14 }: { iconName: string; size?: numbe
 export default function Sidebar({ collapsed, onToggle, activeView = 'Inbox', onViewChange }: SidebarProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [customViews, setCustomViews] = useState<SmartView[]>([]);
+  const [evoSearchInstalled, setEvoSearchInstalled] = useState(false);
+  const [quizzesInstalled, setQuizzesInstalled] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    setEvoSearchInstalled(localStorage.getItem('evoSearchInstalled') === 'true');
+    setQuizzesInstalled(localStorage.getItem('quizzesInstalled') === 'true');
+  }, []);
 
   const allSmartViews = [...defaultSmartViews, ...customViews];
 
@@ -76,16 +100,66 @@ export default function Sidebar({ collapsed, onToggle, activeView = 'Inbox', onV
           )}
         >
           {!collapsed && (
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {/* Brand icon */}
-              <div className="w-7 h-7 rounded-lg bg-[#16a34a] flex items-center justify-center shrink-0">
-                <span className="text-white text-xs font-bold leading-none">A</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[#18181b] leading-none truncate">Evo Support</p>
-                <p className="text-[10px] text-[#71717a] leading-none mt-0.5">Support Inbox</p>
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 min-w-0 flex-1 rounded-md px-1 py-0.5 hover:bg-[#f4f4f5] transition-colors text-left">
+                {/* Brand icon */}
+                <div className="w-7 h-7 rounded-lg bg-[#16a34a] flex items-center justify-center shrink-0">
+                  <span className="text-white text-xs font-bold leading-none">A</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[#18181b] leading-none truncate">Evo Support</p>
+                  <p className="text-[10px] text-[#71717a] leading-none mt-0.5">Support Inbox</p>
+                </div>
+                <ChevronDown size={13} className="text-[#71717a] shrink-0" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="bottom" align="start" className="w-[200px]">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-[10px] font-medium text-[#a1a1aa] uppercase tracking-wide px-2 py-1">Navigate to</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => router.push('/')}>
+                    <BarChart2 size={14} className="shrink-0" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-[10px] font-medium text-[#a1a1aa] uppercase tracking-wide px-2 py-1">Apps</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => router.push('/inbox')}>
+                    <Inbox size={14} className="shrink-0" />
+                    <span>Support Agent</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/sales-agent/analytics')}>
+                    <ShoppingBag size={14} className="shrink-0" />
+                    <span>Sales Agent</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push(evoSearchInstalled ? '/evo-search/analytics' : '/evo-search/install')}>
+                    <Search size={14} className="shrink-0" />
+                    <span>Evo Search</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push(quizzesInstalled ? '/quizzes' : '/quizzes/install')}>
+                    <FileQuestion size={14} className="shrink-0" />
+                    <span>Quizzes</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <BookOpen size={14} className="shrink-0" />
+                    <span>Knowledge Base</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => router.push('/team')}>
+                    <UsersRound size={14} className="shrink-0" />
+                    <span>Team</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <HelpCircle size={14} className="shrink-0" />
+                    <span>Support</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <button
             onClick={onToggle}
@@ -96,17 +170,6 @@ export default function Sidebar({ collapsed, onToggle, activeView = 'Inbox', onV
           </button>
         </div>
 
-        {/* Return to Dashboard CTA */}
-        {!collapsed && (
-          <div className="px-2 pb-2 mt-4 shrink-0">
-            <a
-              href="/"
-              className="flex items-center justify-center w-full h-9 rounded-md bg-[#18181b] text-[#fafafa] text-sm font-medium px-3 hover:bg-[#27272a] transition-colors no-underline"
-            >
-              Return to Dashboard
-            </a>
-          </div>
-        )}
 
         {/* Nav Items */}
         <nav className="flex flex-col gap-0.5 p-2 flex-1 overflow-y-auto">

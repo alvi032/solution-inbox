@@ -141,50 +141,23 @@ export default function CreateSmartViewDialog({ open, onOpenChange, onSave }: Pr
             />
           </div>
 
-          {/* Icon Picker */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-[#18181b]">Icon</label>
-            <div className="flex flex-wrap gap-1.5">
-              {ICON_OPTIONS.map(({ name: iconName, icon: Icon }) => (
-                <button
-                  key={iconName}
-                  onClick={() => setSelectedIcon(iconName)}
-                  className={cn(
-                    'w-8 h-8 flex items-center justify-center rounded-md border transition-colors',
-                    selectedIcon === iconName
-                      ? 'bg-[#18181b] text-white border-[#18181b]'
-                      : 'bg-white text-[#71717a] border-[#e4e4e7] hover:border-[#a1a1aa] hover:text-[#18181b]'
-                  )}
-                  title={iconName}
-                >
-                  <Icon size={14} />
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Filter Rules */}
           <div className="space-y-2">
             <label className="text-xs font-medium text-[#18181b]">Filters</label>
             <div className="space-y-2">
-              {rules.map((rule, idx) => (
+              {rules.map((rule) => (
                 <div key={rule.id} className="flex items-center gap-2">
-                  {idx > 0 && (
-                    <span className="text-[11px] text-[#71717a] w-6 text-center shrink-0">AND</span>
-                  )}
-                  {idx === 0 && <div className="w-6 shrink-0" />}
-
                   {/* Variable selector */}
                   <Select
                     value={rule.variable}
                     onValueChange={(val) => val && updateRule(rule.id, 'variable', val)}
                   >
-                    <SelectTrigger className="h-8 text-xs flex-1 w-full">
+                    <SelectTrigger className="flex-1 w-full">
                       <SelectValue placeholder="Select variable…" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.keys(VARIABLE_OPTIONS).map((v) => (
-                        <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>
+                        <SelectItem key={v} value={v}>{v}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -195,12 +168,12 @@ export default function CreateSmartViewDialog({ open, onOpenChange, onSave }: Pr
                     onValueChange={(val) => val && updateRule(rule.id, 'value', val)}
                     disabled={!rule.variable}
                   >
-                    <SelectTrigger className="h-8 text-xs flex-1 w-full">
+                    <SelectTrigger className="flex-1 w-full">
                       <SelectValue placeholder="Select value…" />
                     </SelectTrigger>
                     <SelectContent>
                       {(VARIABLE_OPTIONS[rule.variable] ?? []).map((v) => (
-                        <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>
+                        <SelectItem key={v} value={v}>{v}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -223,6 +196,28 @@ export default function CreateSmartViewDialog({ open, onOpenChange, onSave }: Pr
               <Plus size={13} />
               Add filter
             </button>
+          </div>
+
+          {/* Icon Picker */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[#18181b]">Icon</label>
+            <div className="flex flex-wrap gap-1.5">
+              {ICON_OPTIONS.map(({ name: iconName, icon: Icon }) => (
+                <button
+                  key={iconName}
+                  onClick={() => setSelectedIcon(iconName)}
+                  className={cn(
+                    'w-8 h-8 flex items-center justify-center rounded-md border transition-colors',
+                    selectedIcon === iconName
+                      ? 'bg-[#18181b] text-white border-[#18181b]'
+                      : 'bg-white text-[#71717a] border-[#e4e4e7] hover:border-[#a1a1aa] hover:text-[#18181b]'
+                  )}
+                  title={iconName}
+                >
+                  <Icon size={14} />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
