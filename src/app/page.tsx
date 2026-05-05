@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AppSidebar, { getDashboardView, type DashboardView } from '@/components/app-sidebar';
 import ResetButton from '@/components/reset-button';
 import {
@@ -20,8 +20,17 @@ import {
   Bot,
   Sparkles,
   AlertTriangle,
+  Eye,
+  X,
+  Send,
+  Radio,
+  SlidersHorizontal,
+  BookOpen,
+  Network,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 // ─── Admin view data ────────────────────────────────────────────────
 
@@ -919,10 +928,270 @@ function AgentDashboard() {
   );
 }
 
+// ─── Preview Modal ────────────────────────────────────────────────
+
+const PREVIEW_WORKFLOWS = [
+  { id: 'return-refund', name: 'Return & Refund Handler' },
+  { id: 'delivery-issues', name: 'Order Delivery Issues' },
+  { id: 'subscription', name: 'Subscription Manager' },
+  { id: 'missing-item', name: 'Missing or Wrong Item Handler' },
+  { id: 'order-changes', name: 'Order Changes' },
+];
+
+type PreviewStep = 'mode' | 'config' | 'chat';
+type PreviewMode = 'live' | 'custom';
+
+interface PreviewConfig {
+  mode: PreviewMode;
+  workflows: string[];
+  knowledgeBase: boolean;
+}
+
+function PreviewChatInterface({ config }: { config: PreviewConfig }) {
+  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([
+    {
+      role: 'ai',
+      content: config.mode === 'live'
+        ? 'Hi! I\'m running with your current live configuration. Ask me anything to test how I handle customer requests.'
+        : `Hi! I'm running with your custom configuration (${config.workflows.length} workflow${config.workflows.length !== 1 ? 's' : ''}${config.knowledgeBase ? ' + Knowledge Base' : ''}). Ask me anything to test.`,
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const send = () => {
+    const text = input.trim();
+    if (!text) return;
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
+    setInput('');
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        content: 'Thanks for your message! In a live environment, I\'d process this using your configured workflows and knowledge base to provide an accurate response. This is a preview simulation.',
+      }]);
+    }, 800);
+  };
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+        {messages.map((m, i) => (
+          <div key={i} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
+            {m.role === 'ai' && (
+              <div className="w-6 h-6 rounded-full bg-[#18181b] flex items-center justify-center shrink-0 mr-2 mt-0.5">
+                <Bot size={12} className="text-white" />
+              </div>
+            )}
+            <div className={cn(
+              'max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
+              m.role === 'user'
+                ? 'bg-[#18181b] text-white rounded-br-sm'
+                : 'bg-[#f4f4f5] text-[#18181b] rounded-bl-sm'
+            )}>
+              {m.content}
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+      <div className="border-t border-[#e4e4e7] p-3 shrink-0">
+        <div className="flex items-center gap-2 rounded-xl border border-[#e4e4e7] bg-[#fafafa] px-3 py-2">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
+            placeholder="Type a message to test…"
+            className="flex-1 text-sm bg-transparent outline-none text-[#18181b] placeholder:text-[#a1a1aa]"
+          />
+          <button
+            onClick={send}
+            disabled={!input.trim()}
+            className="w-7 h-7 rounded-lg bg-[#18181b] flex items-center justify-center disabled:opacity-30 transition-opacity shrink-0"
+          >
+            <Send size={12} className="text-white" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PreviewModal({ onClose }: { onClose: () => void }) {
+  const [step, setStep] = useState<PreviewStep>('mode');
+  const [mode, setMode] = useState<PreviewMode | null>(null);
+  const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>(PREVIEW_WORKFLOWS.map(w => w.id));
+  const [knowledgeBase, setKnowledgeBase] = useState(true);
+  const [config, setConfig] = useState<PreviewConfig | null>(null);
+
+  const toggleWorkflow = (id: string) =>
+    setSelectedWorkflows(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const startLive = () => {
+    setMode('live');
+    setConfig({ mode: 'live', workflows: [], knowledgeBase: false });
+    setStep('chat');
+  };
+
+  const goCustom = () => {
+    setMode('custom');
+    setStep('config');
+  };
+
+  const startCustom = () => {
+    setConfig({ mode: 'custom', workflows: selectedWorkflows, knowledgeBase });
+    setStep('chat');
+  };
+
+  const titles: Record<PreviewStep, string> = {
+    mode: 'Preview AI Agent',
+    config: 'Custom Configuration',
+    chat: mode === 'live' ? 'Live Preview' : 'Custom Preview',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className={cn(
+        'bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-[#e4e4e7] transition-all',
+        step === 'chat' ? 'w-[440px] h-[580px]' : 'w-[480px]'
+      )}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e4e4e7] shrink-0">
+          <div className="flex items-center gap-2">
+            {step !== 'mode' && (
+              <button
+                onClick={() => setStep(step === 'chat' && mode === 'custom' ? 'config' : 'mode')}
+                className="w-6 h-6 flex items-center justify-center rounded-md text-[#a1a1aa] hover:text-[#18181b] hover:bg-[#f4f4f5] transition-colors mr-1"
+              >
+                <ChevronRight size={14} className="rotate-180" />
+              </button>
+            )}
+            <p className="text-sm font-semibold text-[#18181b]">{titles[step]}</p>
+            {step === 'chat' && (
+              <span className={cn(
+                'text-[11px] font-medium rounded-full px-2 py-0.5 border',
+                mode === 'live'
+                  ? 'bg-green-50 text-green-700 border-green-200'
+                  : 'bg-[#f4f4f5] text-[#3f3f46] border-[#e4e4e7]'
+              )}>
+                {mode === 'live' ? 'Live config' : `${selectedWorkflows.length} workflow${selectedWorkflows.length !== 1 ? 's' : ''}`}
+              </span>
+            )}
+          </div>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-md text-[#a1a1aa] hover:text-[#18181b] hover:bg-[#f4f4f5] transition-colors">
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Mode selection */}
+        {step === 'mode' && (
+          <div className="p-5 space-y-3">
+            <p className="text-xs text-[#71717a] mb-4">Choose how you want to test the AI agent.</p>
+            <button
+              onClick={startLive}
+              className="w-full flex items-start gap-4 rounded-xl border border-[#e4e4e7] p-4 text-left hover:border-[#a1a1aa] hover:bg-[#fafafa] transition-all group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+                <Radio size={16} className="text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#18181b]">Live Preview</p>
+                <p className="text-xs text-[#71717a] mt-0.5 leading-relaxed">Test the agent using your current live configuration — exactly as customers experience it today.</p>
+              </div>
+              <ChevronRight size={15} className="text-[#a1a1aa] group-hover:text-[#3f3f46] shrink-0 mt-1 transition-colors" />
+            </button>
+            <button
+              onClick={goCustom}
+              className="w-full flex items-start gap-4 rounded-xl border border-[#e4e4e7] p-4 text-left hover:border-[#a1a1aa] hover:bg-[#fafafa] transition-all group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-[#eff6ff] flex items-center justify-center shrink-0">
+                <SlidersHorizontal size={16} className="text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#18181b]">Custom Configuration</p>
+                <p className="text-xs text-[#71717a] mt-0.5 leading-relaxed">Select specific workflows and knowledge base settings to test a custom setup before going live.</p>
+              </div>
+              <ChevronRight size={15} className="text-[#a1a1aa] group-hover:text-[#3f3f46] shrink-0 mt-1 transition-colors" />
+            </button>
+          </div>
+        )}
+
+        {/* Custom config */}
+        {step === 'config' && (
+          <div className="p-5">
+            <div className="mb-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Network size={13} className="text-[#3f3f46]" />
+                <p className="text-xs font-semibold text-[#18181b] uppercase tracking-wide">Workflows</p>
+              </div>
+              <div className="space-y-1">
+                {PREVIEW_WORKFLOWS.map(w => (
+                  <label key={w.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-[#f4f4f5] cursor-pointer transition-colors group">
+                    <div
+                      onClick={() => toggleWorkflow(w.id)}
+                      className={cn(
+                        'w-4 h-4 rounded border shrink-0 flex items-center justify-center transition-colors cursor-pointer',
+                        selectedWorkflows.includes(w.id) ? 'bg-[#18181b] border-[#18181b]' : 'border-[#d4d4d8] group-hover:border-[#a1a1aa]'
+                      )}
+                    >
+                      {selectedWorkflows.includes(w.id) && <Check size={10} className="text-white" />}
+                    </div>
+                    <span className="text-sm text-[#3f3f46]">{w.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-[#f4f4f5] pt-5">
+              <div className="flex items-center gap-2 mb-3">
+                <BookOpen size={13} className="text-[#3f3f46]" />
+                <p className="text-xs font-semibold text-[#18181b] uppercase tracking-wide">Knowledge Base</p>
+              </div>
+              <label className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#f4f4f5] cursor-pointer transition-colors">
+                <span className="text-sm text-[#3f3f46]">Include Knowledge Base</span>
+                <button
+                  type="button"
+                  onClick={() => setKnowledgeBase(v => !v)}
+                  className={cn(
+                    'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors',
+                    knowledgeBase ? 'bg-[#18181b]' : 'bg-[#e4e4e7]'
+                  )}
+                >
+                  <span className={cn(
+                    'inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform',
+                    knowledgeBase ? 'translate-x-4' : 'translate-x-1'
+                  )} />
+                </button>
+              </label>
+            </div>
+
+            <button
+              onClick={startCustom}
+              disabled={selectedWorkflows.length === 0}
+              className="mt-5 w-full h-9 rounded-lg bg-[#18181b] text-white text-sm font-medium hover:bg-[#27272a] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Start Testing
+            </button>
+          </div>
+        )}
+
+        {/* Chat */}
+        {step === 'chat' && config && (
+          <PreviewChatInterface config={config} />
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [view, setView] = useState<DashboardView>('admin');
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     setView(getDashboardView());
@@ -949,15 +1218,25 @@ export default function DashboardPage() {
                   : 'Welcome back, Sarah. Here\'s your personal performance.'}
               </p>
             </div>
-            <span className="text-xs text-[#a1a1aa] bg-[#f4f4f5] rounded-lg px-2.5 py-1.5 font-medium capitalize">
-              {view} view
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPreviewOpen(true)}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#18181b] text-white text-sm font-medium hover:bg-[#27272a] transition-colors"
+              >
+                <Eye size={14} />
+                Preview
+              </button>
+              <span className="text-xs text-[#a1a1aa] bg-[#f4f4f5] rounded-lg px-2.5 py-1.5 font-medium capitalize">
+                {view} view
+              </span>
+            </div>
           </div>
 
           {view === 'admin' ? <AdminDashboard /> : <AgentDashboard />}
         </div>
       </main>
       <ResetButton />
+      {previewOpen && <PreviewModal onClose={() => setPreviewOpen(false)} />}
     </div>
   );
 }

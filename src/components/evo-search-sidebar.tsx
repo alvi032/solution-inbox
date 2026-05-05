@@ -57,18 +57,6 @@ export default function EvoSearchSidebar() {
         </button>
       </div>
 
-      {/* Return to Dashboard CTA */}
-      {!collapsed && (
-        <div className="px-2 pb-2 mt-4 shrink-0">
-          <a
-            href="/"
-            className="flex items-center justify-center w-full h-9 rounded-md bg-[#18181b] text-[#fafafa] text-sm font-medium px-3 hover:bg-[#27272a] transition-colors no-underline"
-          >
-            Return to Dashboard
-          </a>
-        </div>
-      )}
-
       {/* Nav items */}
       <nav className="flex flex-col gap-0.5 p-2 flex-1 overflow-y-auto">
         {navItems.map(({ icon: Icon, label, href }) => {

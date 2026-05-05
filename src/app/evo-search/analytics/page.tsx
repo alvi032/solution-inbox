@@ -1,4 +1,7 @@
+'use client';
+
 import EvoSearchSidebar from '@/components/evo-search-sidebar';
+import AppSidebar from '@/components/app-sidebar';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const heroMetrics = [
@@ -111,6 +114,7 @@ const tagStyles: Record<string, string> = {
 export default function EvoSearchAnalyticsPage() {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
+      <AppSidebar forceCollapsed />
       <EvoSearchSidebar />
 
       <main className="flex-1 overflow-y-auto bg-[#fafafa]">

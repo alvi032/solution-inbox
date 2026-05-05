@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Ticket } from '@/lib/data';
 import Sidebar from '@/components/sidebar';
+import AppSidebar from '@/components/app-sidebar';
 import TicketList from '@/components/ticket-list';
 import ChatPanel from '@/components/chat-panel';
 import DetailPanel from '@/components/detail-panel';
@@ -67,6 +68,7 @@ export default function InboxPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
+      <AppSidebar forceCollapsed />
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((v) => !v)}
