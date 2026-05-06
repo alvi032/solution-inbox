@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,9 @@ import {
   Command,
   FileQuestion,
   GitBranch,
+  Store,
+  Plus,
+  Check,
 } from 'lucide-react';
 
 export type DashboardView = 'admin' | 'agent';
@@ -97,6 +100,117 @@ function WorkflowsNavItem({ isCollapsed, forceCollapsed, pathname }: { isCollaps
   );
 }
 
+const BRAND = {
+  name: 'TBS',
+  plan: 'Enterprise',
+  stores: [
+    { id: 'us', label: 'US Store', flag: '🇺🇸' },
+    { id: 'eu', label: 'EU Store', flag: '🇪🇺' },
+    { id: 'uae', label: 'UAE Store', flag: '🇦🇪' },
+    { id: 'sg', label: 'SG Store', flag: '🇸🇬' },
+  ],
+};
+
+function BrandDropdown({
+  isCollapsed,
+  forceCollapsed,
+  onCollapse,
+}: {
+  isCollapsed: boolean;
+  forceCollapsed: boolean;
+  onCollapse: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [activeStore, setActiveStore] = useState('us');
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative shrink-0" ref={ref}>
+      <div className="flex items-center gap-2 p-2">
+        {!isCollapsed && (
+          <button
+            onClick={() => setOpen(v => !v)}
+            className="flex items-center gap-2 flex-1 min-w-0 rounded-md px-1 py-1 hover:bg-[#f4f4f5] transition-colors"
+          >
+            <div className="w-8 h-8 rounded-lg bg-[#18181b] flex items-center justify-center shrink-0">
+              <Command size={16} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-semibold text-[#3f3f46] leading-none truncate">{BRAND.name}</span>
+                <ChevronDown size={14} className={cn('text-[#3f3f46] shrink-0 transition-transform', open && 'rotate-180')} />
+              </div>
+              <p className="text-xs text-[#3f3f46] leading-none mt-0.5">{BRAND.plan}</p>
+            </div>
+          </button>
+        )}
+        {!forceCollapsed && (
+          <button
+            onClick={onCollapse}
+            className={cn(
+              'w-8 h-8 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors shrink-0',
+              isCollapsed && 'mx-auto'
+            )}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <PanelLeft size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {open && !isCollapsed && (
+        <div className="absolute left-2 right-2 top-full mt-1 bg-white border border-[#e4e4e7] rounded-xl shadow-lg z-50 overflow-hidden">
+          {/* Brand header */}
+          <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-[#f4f4f5]">
+            <div className="w-7 h-7 rounded-lg bg-[#18181b] flex items-center justify-center shrink-0">
+              <Command size={13} className="text-white" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#18181b] leading-none">{BRAND.name}</p>
+              <p className="text-[10px] text-[#a1a1aa] leading-none mt-0.5">{BRAND.plan}</p>
+            </div>
+          </div>
+
+          {/* Stores */}
+          <div className="py-1">
+            <p className="px-3 pt-1 pb-1 text-[10px] font-semibold text-[#a1a1aa] uppercase tracking-wider">Stores</p>
+            {BRAND.stores.map(store => (
+              <button
+                key={store.id}
+                onClick={() => { setActiveStore(store.id); setOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[#fafafa] transition-colors"
+              >
+                <span className="text-base leading-none">{store.flag}</span>
+                <span className="flex-1 text-[#18181b]">{store.label}</span>
+                {activeStore === store.id && (
+                  <Check size={13} className="text-[#16a34a] shrink-0" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Add store */}
+          <div className="border-t border-[#f4f4f5] p-1.5">
+            <button className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm text-[#3f3f46] hover:bg-[#fafafa] transition-colors">
+              <Plus size={14} className="text-[#a1a1aa] shrink-0" />
+              Add store
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
   const isCollapsed = forceCollapsed || collapsed;
@@ -139,34 +253,7 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
       )}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 p-2 shrink-0">
-        {!isCollapsed && (
-          <>
-            <div className="w-8 h-8 rounded-lg bg-[#18181b] flex items-center justify-center shrink-0">
-              <Command size={16} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-semibold text-[#3f3f46] leading-none truncate">Evo</span>
-                <ChevronDown size={14} className="text-[#3f3f46] shrink-0" />
-              </div>
-              <p className="text-xs text-[#3f3f46] leading-none mt-0.5">Enterprise</p>
-            </div>
-          </>
-        )}
-        {!forceCollapsed && (
-          <button
-            onClick={() => setCollapsed((v) => !v)}
-            className={cn(
-              'w-8 h-8 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors shrink-0',
-              isCollapsed && 'mx-auto'
-            )}
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <PanelLeft size={16} />
-          </button>
-        )}
-      </div>
+      <BrandDropdown isCollapsed={isCollapsed} forceCollapsed={forceCollapsed} onCollapse={() => setCollapsed(v => !v)} />
 
       {/* Navigation */}
       <nav className="flex flex-col gap-2 px-2 pb-2 flex-1 overflow-y-auto">
@@ -376,6 +463,21 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
               <HelpCircle size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
               {!isCollapsed && <span>Support</span>}
             </button>
+          </NavTooltip>
+          <NavTooltip label="Store Management" enabled={isCollapsed}>
+            <Link
+              href="/store-management"
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                pathname === '/store-management'
+                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <Store size={16} className={cn('shrink-0', pathname === '/store-management' ? '' : 'opacity-70 group-hover:opacity-100')} />
+              {!isCollapsed && <span>Store Management</span>}
+            </Link>
           </NavTooltip>
         </div>
 

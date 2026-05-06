@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   ChevronRight,
+  ChevronDown,
   DollarSign,
   Zap,
   Star,
@@ -1187,11 +1188,108 @@ function PreviewModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ─── Store filter ─────────────────────────────────────────
+
+const DASHBOARD_STORES = [
+  { id: 'us',  label: 'US Store',  flag: '🇺🇸' },
+  { id: 'eu',  label: 'EU Store',  flag: '🇪🇺' },
+  { id: 'uae', label: 'UAE Store', flag: '🇦🇪' },
+  { id: 'sg',  label: 'SG Store',  flag: '🇸🇬' },
+];
+
+function DashboardStoreFilter({
+  selected,
+  onChange,
+}: {
+  selected: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const allSelected = selected.length === 0;
+  const label = allSelected
+    ? 'All stores'
+    : selected.length === 1
+      ? DASHBOARD_STORES.find(s => s.id === selected[0])?.label ?? '1 store'
+      : `${selected.length} stores`;
+
+  function toggle(id: string) {
+    onChange(selected.includes(id) ? selected.filter(s => s !== id) : [...selected, id]);
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className={cn(
+          'flex items-center gap-2 h-8 px-3 rounded-lg border text-sm transition-colors bg-white',
+          open || !allSelected
+            ? 'border-[#18181b] text-[#18181b]'
+            : 'border-[#e4e4e7] text-[#3f3f46] hover:border-[#a1a1aa]',
+        )}
+      >
+        <span className="font-medium">{label}</span>
+        <ChevronDown size={13} className={cn('transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 w-52 bg-white border border-[#e4e4e7] rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
+          {/* All stores */}
+          <button
+            onClick={() => { onChange([]); setOpen(false); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[#fafafa] transition-colors"
+          >
+            <span className={cn(
+              'w-4 h-4 rounded border flex items-center justify-center shrink-0',
+              allSelected ? 'bg-[#18181b] border-[#18181b]' : 'border-[#d4d4d8]',
+            )}>
+              {allSelected && <Check size={10} className="text-white" strokeWidth={3} />}
+            </span>
+            <span className={cn('flex-1', allSelected && 'font-medium text-[#18181b]')}>All stores</span>
+          </button>
+
+          <div className="border-t border-[#f4f4f5] my-1" />
+
+          {DASHBOARD_STORES.map(store => {
+            const checked = selected.includes(store.id);
+            return (
+              <button
+                key={store.id}
+                onClick={() => toggle(store.id)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[#fafafa] transition-colors"
+              >
+                <span className={cn(
+                  'w-4 h-4 rounded border flex items-center justify-center shrink-0',
+                  checked ? 'bg-[#18181b] border-[#18181b]' : 'border-[#d4d4d8]',
+                )}>
+                  {checked && <Check size={10} className="text-white" strokeWidth={3} />}
+                </span>
+                <span className="text-base leading-none shrink-0">{store.flag}</span>
+                <span className="flex-1 text-[#18181b]">{store.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [view, setView] = useState<DashboardView>('admin');
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedStores, setSelectedStores] = useState<string[]>([]);
 
   useEffect(() => {
     setView(getDashboardView());
@@ -1219,6 +1317,7 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <DashboardStoreFilter selected={selectedStores} onChange={setSelectedStores} />
               <button
                 onClick={() => setPreviewOpen(true)}
                 className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#18181b] text-white text-sm font-medium hover:bg-[#27272a] transition-colors"
