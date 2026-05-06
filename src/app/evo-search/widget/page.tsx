@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import EvoSearchSidebar from '@/components/evo-search-sidebar';
+import AppSidebar from '@/components/app-sidebar';
 import {
   Monitor,
   Smartphone,
@@ -184,6 +185,7 @@ export default function WidgetCustomizationPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
+      <AppSidebar forceCollapsed />
       <EvoSearchSidebar />
 
       <main className="flex-1 overflow-y-auto bg-[#f6f6f7]">

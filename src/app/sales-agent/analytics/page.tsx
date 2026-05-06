@@ -1,6 +1,7 @@
 'use client';
 
 import SalesAgentSidebar from '@/components/sales-agent-sidebar';
+import AppSidebar from '@/components/app-sidebar';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const heroMetrics = [
@@ -68,6 +69,7 @@ const topProducts = [
 export default function SalesAgentAnalyticsPage() {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
+      <AppSidebar forceCollapsed />
       <SalesAgentSidebar />
 
       <main className="flex-1 overflow-y-auto bg-[#fafafa]">

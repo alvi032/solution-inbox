@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import {
   BarChart2,
   Inbox,
@@ -16,6 +17,7 @@ import {
   ChevronDown,
   Command,
   FileQuestion,
+  GitBranch,
 } from 'lucide-react';
 
 export type DashboardView = 'admin' | 'agent';
@@ -27,8 +29,77 @@ export function getDashboardView(): DashboardView {
   return (localStorage.getItem(STORAGE_KEY) as DashboardView) ?? 'admin';
 }
 
-export default function AppSidebar() {
+function NavTooltip({ label, enabled, children }: { label: string; enabled: boolean; children: React.ReactElement }) {
+  if (!enabled) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger render={children} />
+      <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function WorkflowsNavItem({ isCollapsed, forceCollapsed, pathname }: { isCollapsed: boolean; forceCollapsed: boolean; pathname: string }) {
+  const isActive = pathname.startsWith('/evo-ai/workflows');
+  const [expanded, setExpanded] = useState(isActive);
+
+  return (
+    <div className={cn('flex flex-col gap-0.5', !forceCollapsed && 'mt-6')}>
+      {isCollapsed && <div className="border-t border-[#e5e7eb] my-1" />}
+
+      {/* Parent row: icon+label is a link, chevron toggles expand */}
+      <div className={cn(
+        'group flex items-center rounded-md h-8 text-[14px] transition-colors',
+        isActive ? 'bg-[#f4f4f5] text-[#18181b] font-medium' : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+        isCollapsed && 'justify-center',
+      )}>
+        <NavTooltip label="Workflows" enabled={isCollapsed}>
+          <Link
+            href="/evo-ai/workflows"
+            className={cn('flex items-center gap-2 flex-1 min-w-0 px-2 h-full', isCollapsed && 'justify-center px-0')}
+          >
+            <GitBranch size={16} className={cn('shrink-0', isActive ? '' : 'opacity-70 group-hover:opacity-100')} />
+            {!isCollapsed && <span className="flex-1 truncate">Workflows</span>}
+          </Link>
+        </NavTooltip>
+
+        {!isCollapsed && (
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="w-6 h-6 flex items-center justify-center mr-1 shrink-0 text-[#a1a1aa] hover:text-[#18181b] transition-colors"
+          >
+            <ChevronDown size={13} className={cn('transition-transform', expanded ? 'rotate-0' : '-rotate-90')} />
+          </button>
+        )}
+      </div>
+
+      {/* Sub-items */}
+      {!isCollapsed && expanded && (
+        <div className="flex flex-col gap-0.5 ml-5 pl-2 border-l border-[#e5e7eb]">
+          <Link
+            href="/evo-ai/workflows?tab=support"
+            className="flex items-center h-7 px-2 rounded-md text-[13px] text-[#71717a] hover:text-[#18181b] hover:bg-[#f4f4f5] transition-colors"
+          >
+            Support Workflows
+          </Link>
+          <Link
+            href="/evo-ai/workflows?tab=sales"
+            className={cn(
+              'flex items-center h-7 px-2 rounded-md text-[13px] transition-colors',
+              'text-[#71717a] hover:text-[#18181b] hover:bg-[#f4f4f5]',
+            )}
+          >
+            Sales Workflows
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
+  const isCollapsed = forceCollapsed || collapsed;
   const [evoSearchInstalled, setEvoSearchInstalled] = useState(false);
   const [quizzesInstalled, setQuizzesInstalled] = useState(false);
   const [dashboardView, setDashboardViewState] = useState<DashboardView>('admin');
@@ -60,15 +131,16 @@ export default function AppSidebar() {
   }
 
   return (
+    <TooltipProvider delay={0}>
     <div
       className={cn(
         'flex flex-col h-full bg-[#fafafa] border-r border-[#e5e7eb] shrink-0 transition-all duration-200',
-        collapsed ? 'w-[48px]' : 'w-[256px]'
+        isCollapsed ? 'w-[48px]' : 'w-[256px]'
       )}
     >
       {/* Header */}
       <div className="flex items-center gap-2 p-2 shrink-0">
-        {!collapsed && (
+        {!isCollapsed && (
           <>
             <div className="w-8 h-8 rounded-lg bg-[#18181b] flex items-center justify-center shrink-0">
               <Command size={16} className="text-white" />
@@ -82,124 +154,135 @@ export default function AppSidebar() {
             </div>
           </>
         )}
-        <button
-          onClick={() => setCollapsed((v) => !v)}
-          className={cn(
-            'w-8 h-8 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors shrink-0',
-            collapsed && 'mx-auto'
-          )}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          <PanelLeft size={16} />
-        </button>
+        {!forceCollapsed && (
+          <button
+            onClick={() => setCollapsed((v) => !v)}
+            className={cn(
+              'w-8 h-8 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors shrink-0',
+              isCollapsed && 'mx-auto'
+            )}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <PanelLeft size={16} />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
       <nav className="flex flex-col gap-2 px-2 pb-2 flex-1 overflow-y-auto">
 
         {/* Dashboard */}
-        <div className="flex flex-col gap-0.5 mt-6">
-          <Link
-            href="/"
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
-              pathname === '/'
-                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Dashboard' : undefined}
-          >
-            <BarChart2 size={16} className="shrink-0" />
-            {!collapsed && <span>Dashboard</span>}
-          </Link>
+        <div className={cn('flex flex-col gap-0.5', !forceCollapsed && 'mt-6')}>
+          <NavTooltip label="Dashboard" enabled={isCollapsed}>
+            <Link
+              href="/"
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                pathname === '/'
+                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <BarChart2 size={16} className={cn('shrink-0', pathname === '/' ? '' : 'opacity-70 group-hover:opacity-100')} />
+              {!isCollapsed && <span>Dashboard</span>}
+            </Link>
+          </NavTooltip>
         </div>
 
         {/* Apps */}
-        <div className="flex flex-col gap-0.5 mt-6">
-          {!collapsed && (
-            <p className="px-2 pt-1 text-xs font-medium text-[#3f3f46]/70">Apps</p>
+        <div className={cn('flex flex-col gap-0.5', !forceCollapsed && 'mt-6')}>
+          {!isCollapsed && (
+            <p className="px-2 pt-1 text-[12px] leading-4 font-medium text-[#3f3f46]/70">Apps</p>
           )}
-          {collapsed && <div className="border-t border-[#e5e7eb] my-1" />}
+          {isCollapsed && <div className="border-t border-[#e5e7eb] my-1" />}
 
           {/* Support Agent */}
-          <Link
-            href="/inbox"
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
-              pathname.startsWith('/inbox')
-                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Support Agent' : undefined}
-          >
-            <Inbox size={16} className="shrink-0" />
-            {!collapsed && <span>Support Agent</span>}
-          </Link>
+          <NavTooltip label="Support Agent" enabled={isCollapsed}>
+            <Link
+              href="/inbox"
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                pathname.startsWith('/inbox')
+                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <Inbox size={16} className={cn('shrink-0', pathname.startsWith('/inbox') ? '' : 'opacity-70 group-hover:opacity-100')} />
+              {!isCollapsed && <span>Support Agent</span>}
+            </Link>
+          </NavTooltip>
 
           {/* Sales Agent */}
-          <Link
-            href="/sales-agent/analytics"
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
-              pathname.startsWith('/sales-agent')
-                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Sales Agent' : undefined}
-          >
-            <ShoppingBag size={16} className="shrink-0" />
-            {!collapsed && <span>Sales Agent</span>}
-          </Link>
+          <NavTooltip label="Sales Agent" enabled={isCollapsed}>
+            <Link
+              href="/sales-agent/analytics"
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                pathname.startsWith('/sales-agent')
+                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <ShoppingBag size={16} className={cn('shrink-0', pathname.startsWith('/sales-agent') ? '' : 'opacity-70 group-hover:opacity-100')} />
+              {!isCollapsed && <span>Sales Agent</span>}
+            </Link>
+          </NavTooltip>
 
           {/* Evo Search */}
-          <Link
-            href={evoSearchInstalled ? '/evo-search/analytics' : '/evo-search/install'}
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
-              pathname.startsWith('/evo-search')
-                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Evo Search' : undefined}
-          >
-            <Search size={16} className="shrink-0" />
-            {!collapsed && <span>Evo Search</span>}
-          </Link>
+          <NavTooltip label="Evo Search" enabled={isCollapsed}>
+            <Link
+              href={evoSearchInstalled ? '/evo-search/analytics' : '/evo-search/install'}
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                pathname.startsWith('/evo-search')
+                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <Search size={16} className={cn('shrink-0', pathname.startsWith('/evo-search') ? '' : 'opacity-70 group-hover:opacity-100')} />
+              {!isCollapsed && <span>Evo Search</span>}
+            </Link>
+          </NavTooltip>
 
           {/* Quizzes */}
-          <Link
-            href={quizzesInstalled ? '/quizzes' : '/quizzes/install'}
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-sm transition-colors',
-              pathname.startsWith('/quizzes')
-                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Quizzes' : undefined}
-          >
-            <FileQuestion size={16} className="shrink-0" />
-            {!collapsed && <span>Quizzes</span>}
-          </Link>
+          <NavTooltip label="Quizzes" enabled={isCollapsed}>
+            <Link
+              href={quizzesInstalled ? '/quizzes' : '/quizzes/install'}
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                pathname.startsWith('/quizzes')
+                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <FileQuestion size={16} className={cn('shrink-0', pathname.startsWith('/quizzes') ? '' : 'opacity-70 group-hover:opacity-100')} />
+              {!isCollapsed && <span>Quizzes</span>}
+            </Link>
+          </NavTooltip>
         </div>
 
+        {/* Workflows */}
+        <WorkflowsNavItem isCollapsed={isCollapsed} forceCollapsed={forceCollapsed} pathname={pathname} />
+
         {/* Knowledge Base */}
-        <div className="flex flex-col gap-0.5 mt-6">
-          {collapsed && <div className="border-t border-[#e5e7eb] my-1" />}
-          <button
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-sm text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Knowledge Base' : undefined}
-          >
-            <BookOpen size={16} className="shrink-0" />
-            {!collapsed && <span>Knowledge Base</span>}
-          </button>
+        <div className={cn('flex flex-col gap-0.5', !forceCollapsed && 'mt-6')}>
+          {isCollapsed && <div className="border-t border-[#e5e7eb] my-1" />}
+          <NavTooltip label="Knowledge Base" enabled={isCollapsed}>
+            <button
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <BookOpen size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
+              {!isCollapsed && <span>Knowledge Base</span>}
+            </button>
+          </NavTooltip>
         </div>
 
       </nav>
@@ -208,7 +291,7 @@ export default function AppSidebar() {
       <div className="border-t border-[#e5e7eb] bg-[#fafafa] p-2 shrink-0">
 
         {/* Admin / Agent toggle */}
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="mb-3">
             <p className="px-2 text-[10px] font-medium text-[#a1a1aa] uppercase tracking-wide mb-1.5">Dashboard view</p>
             <div className="flex items-center bg-[#f4f4f5] rounded-lg p-0.5 gap-0.5">
@@ -238,7 +321,7 @@ export default function AppSidebar() {
           </div>
         )}
 
-        {collapsed && (
+        {isCollapsed && !forceCollapsed && (
           <div className="flex flex-col gap-0.5 mb-2">
             <button
               onClick={() => toggleView('admin')}
@@ -268,43 +351,45 @@ export default function AppSidebar() {
         )}
 
         <div className="flex flex-col gap-0.5 mb-2">
-          <Link
-            href="/team"
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-xs transition-colors',
-              pathname === '/team'
-                ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Team' : undefined}
-          >
-            <UsersRound size={16} className="shrink-0" />
-            {!collapsed && <span>Team</span>}
-          </Link>
-          <button
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 h-8 text-xs text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
-              collapsed && 'justify-center px-0'
-            )}
-            title={collapsed ? 'Support' : undefined}
-          >
-            <HelpCircle size={16} className="shrink-0" />
-            {!collapsed && <span>Support</span>}
-          </button>
+          <NavTooltip label="Team" enabled={isCollapsed}>
+            <Link
+              href="/team"
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                pathname === '/team'
+                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <UsersRound size={16} className={cn('shrink-0', pathname === '/team' ? '' : 'opacity-70 group-hover:opacity-100')} />
+              {!isCollapsed && <span>Team</span>}
+            </Link>
+          </NavTooltip>
+          <NavTooltip label="Support" enabled={isCollapsed}>
+            <button
+              className={cn(
+                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
+                isCollapsed && 'justify-center px-0'
+              )}
+            >
+              <HelpCircle size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
+              {!isCollapsed && <span>Support</span>}
+            </button>
+          </NavTooltip>
         </div>
 
         {/* User profile */}
         <div
           className={cn(
             'flex items-center gap-2 rounded-md p-2 hover:bg-[#f4f4f5] transition-colors cursor-pointer',
-            collapsed && 'justify-center'
+            isCollapsed && 'justify-center'
           )}
         >
           <div className="w-8 h-8 rounded-lg bg-[#e4e4e7] shrink-0 flex items-center justify-center">
             <span className="text-xs font-semibold text-[#3f3f46]">SJ</span>
           </div>
-          {!collapsed && (
+          {!isCollapsed && (
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[#3f3f46] leading-none truncate">Sarah Jones</p>
               <p className="text-xs text-[#3f3f46]/70 leading-none mt-0.5 truncate">sarah.jones@example.com</p>
@@ -313,5 +398,6 @@ export default function AppSidebar() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
