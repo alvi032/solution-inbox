@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppSidebar from '@/components/app-sidebar';
 import { cn } from '@/lib/utils';
@@ -233,7 +233,7 @@ function StoreFilter({
 
 // ─── Page ─────────────────────────────────────────────────────────────
 
-export default function WorkflowsPage() {
+function WorkflowsContent() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<'support' | 'sales'>('support');
 
@@ -487,5 +487,13 @@ export default function WorkflowsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function WorkflowsPage() {
+  return (
+    <Suspense>
+      <WorkflowsContent />
+    </Suspense>
   );
 }
