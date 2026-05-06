@@ -200,10 +200,14 @@ function BrandDropdown({
 
           {/* Add store */}
           <div className="border-t border-[#f4f4f5] p-1.5">
-            <button className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm text-[#3f3f46] hover:bg-[#fafafa] transition-colors">
+            <Link
+              href="/store-management/new"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm text-[#3f3f46] hover:bg-[#fafafa] transition-colors"
+            >
               <Plus size={14} className="text-[#a1a1aa] shrink-0" />
               Add store
-            </button>
+            </Link>
           </div>
         </div>
       )}

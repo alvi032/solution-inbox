@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import {
   Search, Plus, X, MoreHorizontal, ShoppingBag,
   Mail, MessageSquare, Globe, ExternalLink, ChevronRight,
@@ -573,10 +574,13 @@ export default function StoreManagementPage() {
                   <h1 className="text-xl font-semibold text-[#18181b]">Stores</h1>
                   <p className="text-sm text-[#71717a] mt-0.5">View and manage all stores across your brands.</p>
                 </div>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#18181b] text-white hover:bg-[#27272a] transition-colors shrink-0">
+                <Link
+                  href="/store-management/new"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#18181b] text-white hover:bg-[#27272a] transition-colors shrink-0"
+                >
                   <Plus size={13} />
                   Add Store
-                </button>
+                </Link>
               </div>
 
               {/* Search */}
