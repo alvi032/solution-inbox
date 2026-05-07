@@ -20,7 +20,6 @@ export default function InboxPage() {
 
   const handleSelectTicket = (ticket: Ticket) => {
     setSelectedTicket(ticket);
-    setSidebarCollapsed(true);
   };
 
   const handleCloseTicket = () => setSelectedTicket(null);
@@ -77,6 +76,9 @@ export default function InboxPage() {
           setActiveView(view);
           setSelectedTicket(null);
         }}
+        archivedIds={archivedIds}
+        spamIds={spamIds}
+        statusOverrides={statusOverrides}
       />
 
       <TicketList
@@ -89,6 +91,8 @@ export default function InboxPage() {
         statusOverrides={statusOverrides}
         onArchive={handleArchive}
         onFilteredChange={setFilteredTickets}
+        sidebarCollapsed={sidebarCollapsed}
+        onExpandSidebar={() => setSidebarCollapsed(false)}
       />
 
       {selectedTicket && (

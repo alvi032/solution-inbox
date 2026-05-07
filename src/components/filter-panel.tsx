@@ -25,6 +25,11 @@ const FILTER_SECTIONS = [
     key: 'assignee',
     options: ['Unassigned', 'Assigned to me', 'Sarah Jones', 'Alex M.', 'Lisa R.', 'Tom K.'],
   },
+  {
+    label: 'Store',
+    key: 'store',
+    options: ['TBS Enterprise', 'TBS US', 'TBS UK', 'TBS UAE', 'Nike Pro', 'Nike US', 'Nike EU', 'Nike APAC'],
+  },
 ];
 
 export type FilterState = Record<string, string[]>;

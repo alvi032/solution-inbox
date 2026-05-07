@@ -5,11 +5,145 @@ import { tickets, Ticket, Category } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Eye, Archive, SquareCheckBig } from 'lucide-react';
+import { Search, Eye, Archive, SquareCheckBig, Building2, ChevronDown, PanelLeft } from 'lucide-react';
 import FilterButton, { FilterState } from '@/components/filter-panel';
 
 // The logged-in user — tickets assigned to this name appear under "My Tickets"
 const CURRENT_USER = 'Sarah Jones';
+
+// Brand + store assignment per ticket
+const TICKET_BRAND: Record<string, { name: string; short: string; bg: string; store: string }> = {
+  '#5195': { name: 'TBS Enterprise', short: 'TBS', bg: '#18181b', store: 'TBS US'    },
+  '#5194': { name: 'Nike Pro',       short: 'NK',  bg: '#e2231a', store: 'Nike US'   },
+  '#5193': { name: 'TBS Enterprise', short: 'TBS', bg: '#18181b', store: 'TBS UK'    },
+  '#5192': { name: 'Nike Pro',       short: 'NK',  bg: '#e2231a', store: 'Nike EU'   },
+  '#5191': { name: 'TBS Enterprise', short: 'TBS', bg: '#18181b', store: 'TBS UAE'   },
+  '#5190': { name: 'Nike Pro',       short: 'NK',  bg: '#e2231a', store: 'Nike APAC' },
+  '#5189': { name: 'TBS Enterprise', short: 'TBS', bg: '#18181b', store: 'TBS US'    },
+  '#5188': { name: 'Nike Pro',       short: 'NK',  bg: '#e2231a', store: 'Nike US'   },
+  '#5187': { name: 'TBS Enterprise', short: 'TBS', bg: '#18181b', store: 'TBS UK'    },
+  '#5186': { name: 'Nike Pro',       short: 'NK',  bg: '#e2231a', store: 'Nike EU'   },
+  '#5185': { name: 'TBS Enterprise', short: 'TBS', bg: '#18181b', store: 'TBS UAE'   },
+  '#5184': { name: 'Nike Pro',       short: 'NK',  bg: '#e2231a', store: 'Nike APAC' },
+  '#5183': { name: 'TBS Enterprise', short: 'TBS', bg: '#18181b', store: 'TBS US'    },
+  '#5182': { name: 'Nike Pro',       short: 'NK',  bg: '#e2231a', store: 'Nike US'   },
+  '#5181': { name: 'TBS Enterprise', short: 'TBS', bg: '#18181b', store: 'TBS UK'    },
+  '#5180': { name: 'Nike Pro',       short: 'NK',  bg: '#e2231a', store: 'Nike EU'   },
+};
+
+const ALL_STORE_NAMES = ['TBS US', 'TBS UK', 'TBS UAE', 'Nike US', 'Nike EU', 'Nike APAC'];
+
+const BRAND_STORE_GROUPS = [
+  { brand: 'TBS Enterprise', short: 'TBS', bg: '#18181b', stores: ['TBS US', 'TBS UK', 'TBS UAE'] },
+  { brand: 'Nike Pro',       short: 'NK',  bg: '#e2231a', stores: ['Nike US', 'Nike EU', 'Nike APAC'] },
+];
+
+function BrandSquare({ short, bg, size = 16 }: { short: string; bg: string; size?: number }) {
+  return (
+    <div
+      className="rounded flex items-center justify-center text-white font-bold shrink-0"
+      style={{ width: size, height: size, backgroundColor: bg, fontSize: size * 0.38 }}
+    >
+      {short}
+    </div>
+  );
+}
+
+function StoreFilterDropdown({
+  selected,
+  onChange,
+}: {
+  selected: string | null;
+  onChange: (store: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  const selectedGroup = selected
+    ? BRAND_STORE_GROUPS.find(g => g.stores.includes(selected))
+    : null;
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className={cn(
+          'flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-xs transition-colors whitespace-nowrap',
+          open || selected
+            ? 'border-[#18181b] bg-[#18181b] text-white'
+            : 'border-[#e5e7eb] bg-white text-[#71717a] hover:text-[#18181b]'
+        )}
+      >
+        {selectedGroup ? (
+          <BrandSquare short={selectedGroup.short} bg="rgba(255,255,255,0.25)" size={14} />
+        ) : (
+          <Building2 size={13} />
+        )}
+        <span>{selected ?? 'All Stores'}</span>
+        <ChevronDown size={11} className={cn('transition-transform shrink-0', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-2 z-50 w-[210px] bg-white border border-[#e4e4e7] rounded-lg shadow-lg overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#f4f4f5]">
+            <span className="text-xs font-semibold text-[#18181b]">Store</span>
+            {selected && (
+              <button
+                onClick={() => { onChange(null); setOpen(false); }}
+                className="text-[10px] text-[#71717a] hover:text-[#18181b] transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="py-1.5">
+            {BRAND_STORE_GROUPS.map(group => (
+              <div key={group.brand}>
+                {/* Brand header — not clickable, just a label */}
+                <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+                  <BrandSquare short={group.short} bg={group.bg} size={14} />
+                  <span className="text-[10px] font-semibold text-[#71717a] uppercase tracking-wide">{group.brand}</span>
+                </div>
+                {group.stores.map(store => {
+                  const isSelected = selected === store;
+                  return (
+                    <button
+                      key={store}
+                      onClick={() => { onChange(isSelected ? null : store); setOpen(false); }}
+                      className={cn(
+                        'flex items-center gap-2 w-full pl-8 pr-3 py-1.5 text-xs transition-colors text-left',
+                        isSelected
+                          ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                          : 'text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                        isSelected ? 'border-[#18181b]' : 'border-[#d4d4d8]'
+                      )}>
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#18181b]" />}
+                      </div>
+                      {store}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 type TabFilter = 'All' | 'Open' | 'Closed';
 
@@ -39,6 +173,8 @@ interface TicketListProps {
   statusOverrides: Record<string, 'open' | 'closed'>;
   onArchive: (id: string) => void;
   onFilteredChange?: (tickets: Ticket[]) => void;
+  sidebarCollapsed?: boolean;
+  onExpandSidebar?: () => void;
 }
 
 function AgentPicker({
@@ -234,7 +370,7 @@ function NarrowTicketRow({
       )}
       onClick={onSelect}
     >
-      {/* Top row: name + badge + timestamp */}
+      {/* Top row: brand + name + badge + timestamp */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="text-sm text-[#18181b] truncate">{ticket.customer.name}</span>
@@ -262,21 +398,29 @@ function getViewTitle(activeView: string): string {
     Unassigned: 'Unassigned',
     Archived: 'Archived',
     Spam: 'Spam',
+    'TBS Enterprise': 'TBS Enterprise',
+    'Nike Pro': 'Nike Pro',
+    'TBS US': 'TBS US', 'TBS UK': 'TBS UK', 'TBS UAE': 'TBS UAE',
+    'Nike US': 'Nike US', 'Nike EU': 'Nike EU', 'Nike APAC': 'Nike APAC',
   };
   return titles[activeView] ?? activeView;
 }
 
 const VIEWS_WITHOUT_TABS = ['Archived', 'Spam'];
 
-export default function TicketList({ selectedId, onSelect, narrow, activeView, archivedIds, spamIds, statusOverrides, onArchive, onFilteredChange }: TicketListProps) {
+export default function TicketList({ selectedId, onSelect, narrow, activeView, archivedIds, spamIds, statusOverrides, onArchive, onFilteredChange, sidebarCollapsed, onExpandSidebar }: TicketListProps) {
   const [tab, setTab] = useState<TabFilter>('All');
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<FilterState>({});
+  const [storeFilter, setStoreFilter] = useState<string | null>(
+    ALL_STORE_NAMES.includes(activeView) ? activeView : null
+  );
 
-  // Reset tab and search when switching views
+  // Reset tab, search, and sync store filter when switching views
   useEffect(() => {
     setTab('All');
     setSearch('');
+    setStoreFilter(ALL_STORE_NAMES.includes(activeView) ? activeView : null);
   }, [activeView]);
 
   const effectiveStatus = (t: Ticket): 'open' | 'closed' => statusOverrides[t.id] ?? t.status;
@@ -289,6 +433,12 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
     if (archivedIds.has(t.id) || spamIds.has(t.id)) return false;
     if (activeView === 'My Tickets') return t.assignee === CURRENT_USER;
     if (activeView === 'Unassigned') return t.assignee === 'Unassigned';
+    // Brand views
+    const brand = TICKET_BRAND[t.id];
+    if (activeView === 'TBS Enterprise') return brand?.name === 'TBS Enterprise';
+    if (activeView === 'Nike Pro')       return brand?.name === 'Nike Pro';
+    // Store views
+    if (ALL_STORE_NAMES.includes(activeView)) return brand?.store === activeView;
     return true;
   }), [activeView, archivedIds, spamIds]);
 
@@ -328,6 +478,22 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
     const typeFilter = filters.type ?? [];
     if (typeFilter.length > 0 && !typeFilter.includes(t.category)) return false;
 
+    // Dedicated store dropdown filter (single select)
+    if (storeFilter !== null) {
+      const brand = TICKET_BRAND[t.id];
+      if (!brand || brand.store !== storeFilter) return false;
+    }
+
+    // Store/brand filter (from filter panel)
+    const storePanelFilter = filters.store ?? [];
+    if (storePanelFilter.length > 0) {
+      const brand = TICKET_BRAND[t.id];
+      if (!brand) return false;
+      const matchesBrand = storePanelFilter.includes(brand.name);
+      const matchesStore = storePanelFilter.includes(brand.store);
+      if (!matchesBrand && !matchesStore) return false;
+    }
+
     // Assignee filter
     const assigneeFilter = filters.assignee ?? [];
     if (assigneeFilter.length > 0) {
@@ -348,7 +514,7 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
       return false;
 
     return true;
-  }), [viewTickets, tab, filters, search, statusOverrides]);
+  }), [viewTickets, tab, filters, storeFilter, search, statusOverrides]);
 
   useEffect(() => {
     onFilteredChange?.(filtered);
@@ -360,7 +526,18 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
       <div className="flex flex-col gap-3.5 px-4 pt-4 pb-3 border-b border-[#e5e7eb] shrink-0">
         {/* Row 1: Title + Tabs (wide) */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium text-[#18181b]">{getViewTitle(activeView)}</h2>
+          <div className="flex items-center gap-2">
+            {sidebarCollapsed && (
+              <button
+                onClick={onExpandSidebar}
+                title="Expand sidebar"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-[#71717a] hover:text-[#18181b] hover:bg-[#f4f4f5] transition-colors shrink-0"
+              >
+                <PanelLeft size={15} />
+              </button>
+            )}
+            <h2 className="text-base font-medium text-[#18181b]">{getViewTitle(activeView)}</h2>
+          </div>
           {!narrow && !VIEWS_WITHOUT_TABS.includes(activeView) && (
             <div className="flex items-center rounded-md border border-[#e5e7eb] overflow-hidden bg-[#f4f4f5]">
               {(['All', 'Open', 'Closed'] as TabFilter[]).map((t) => (
@@ -385,7 +562,7 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
           )}
         </div>
 
-        {/* Row 2: Search + Filter */}
+        {/* Row 2: Search + Store Filter + Filter */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a1a1aa]" />
@@ -396,6 +573,7 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
               className="pl-8 h-8 text-sm bg-white border-[#e5e7eb] focus-visible:border-[#a1a1aa] rounded-md"
             />
           </div>
+          <StoreFilterDropdown selected={storeFilter} onChange={(s) => setStoreFilter(s)} />
           <FilterButton filters={filters} onChange={setFilters} />
         </div>
 
@@ -425,7 +603,7 @@ export default function TicketList({ selectedId, onSelect, narrow, activeView, a
       </div>
 
       {/* Ticket rows */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className={cn('flex-1 overflow-y-auto overflow-x-hidden', narrow && 'scrollbar-hide')}>
         {filtered.length === 0 ? (
           <div className="px-4 py-8 text-center text-sm text-[#71717a]">No tickets found</div>
         ) : (

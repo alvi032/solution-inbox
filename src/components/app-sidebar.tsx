@@ -15,7 +15,7 @@ import {
   UsersRound,
   PanelLeft,
   ChevronDown,
-  Command,
+  ChevronRight,
   FileQuestion,
   GitBranch,
   Store,
@@ -42,14 +42,12 @@ function NavTooltip({ label, enabled, children }: { label: string; enabled: bool
   );
 }
 
-function WorkflowsNavItem({ isCollapsed, forceCollapsed, pathname }: { isCollapsed: boolean; forceCollapsed: boolean; pathname: string }) {
+function WorkflowsNavItem({ isCollapsed, forceCollapsed, pathname, insightsCount }: { isCollapsed: boolean; forceCollapsed: boolean; pathname: string; insightsCount: number }) {
   const isActive = pathname.startsWith('/evo-ai/workflows');
   const [expanded, setExpanded] = useState(isActive);
 
   return (
-    <div className={cn('flex flex-col gap-0.5', !forceCollapsed && 'mt-6')}>
-      {isCollapsed && <div className="border-t border-[#e5e7eb] my-1" />}
-
+    <>
       {/* Parent row: icon+label is a link, chevron toggles expand */}
       <div className={cn(
         'group flex items-center rounded-md h-8 text-[14px] transition-colors',
@@ -61,8 +59,24 @@ function WorkflowsNavItem({ isCollapsed, forceCollapsed, pathname }: { isCollaps
             href="/evo-ai/workflows"
             className={cn('flex items-center gap-2 flex-1 min-w-0 px-2 h-full', isCollapsed && 'justify-center px-0')}
           >
-            <GitBranch size={16} className={cn('shrink-0', isActive ? '' : 'opacity-70 group-hover:opacity-100')} />
-            {!isCollapsed && <span className="flex-1 truncate">Workflows</span>}
+            <div className="relative shrink-0">
+              <GitBranch size={16} className={cn(isActive ? '' : 'opacity-70 group-hover:opacity-100')} />
+              {isCollapsed && insightsCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-[#18181b] text-white text-[9px] font-bold leading-none flex items-center justify-center">
+                  {insightsCount}
+                </span>
+              )}
+            </div>
+            {!isCollapsed && (
+              <>
+                <span className="flex-1 truncate">Workflows</span>
+                {insightsCount > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#18181b] text-white text-[10px] font-semibold leading-none mr-1">
+                    {insightsCount}
+                  </span>
+                )}
+              </>
+            )}
           </Link>
         </NavTooltip>
 
@@ -87,29 +101,136 @@ function WorkflowsNavItem({ isCollapsed, forceCollapsed, pathname }: { isCollaps
           </Link>
           <Link
             href="/evo-ai/workflows?tab=sales"
-            className={cn(
-              'flex items-center h-7 px-2 rounded-md text-[13px] transition-colors',
-              'text-[#71717a] hover:text-[#18181b] hover:bg-[#f4f4f5]',
-            )}
+            className="flex items-center h-7 px-2 rounded-md text-[13px] text-[#71717a] hover:text-[#18181b] hover:bg-[#f4f4f5] transition-colors"
           >
             Sales Workflows
           </Link>
+          <Link
+            href="/evo-ai/workflows?tab=insights"
+            className="flex items-center gap-1.5 h-7 px-2 rounded-md text-[13px] text-[#71717a] hover:text-[#18181b] hover:bg-[#f4f4f5] transition-colors"
+          >
+            Insights
+            {insightsCount > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-[#18181b] text-white text-[9px] font-bold leading-none">
+                {insightsCount}
+              </span>
+            )}
+          </Link>
         </div>
       )}
+    </>
+  );
+}
+
+const PROFILES = [
+  { id: 'admin', name: 'Sarah Jones', email: 'sarah.jones@example.com', initials: 'SJ', role: 'Admin',  view: 'admin' as DashboardView },
+  { id: 'agent', name: 'Tom K.',      email: 'tom.k@example.com',        initials: 'TK', role: 'Agent',  view: 'agent' as DashboardView },
+];
+
+function ProfileSwitcher({
+  isCollapsed,
+  dashboardView,
+  onSwitch,
+}: {
+  isCollapsed: boolean;
+  dashboardView: DashboardView;
+  onSwitch: (view: DashboardView) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const active = PROFILES.find(p => p.view === dashboardView) ?? PROFILES[0];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* Profile list — pops upward */}
+      {open && !isCollapsed && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-[#e4e4e7] rounded-xl shadow-lg z-50 overflow-hidden py-1">
+          {PROFILES.map(profile => (
+            <button
+              key={profile.id}
+              type="button"
+              onClick={() => { onSwitch(profile.view); setOpen(false); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[#fafafa] transition-colors text-left"
+            >
+              <div className={cn(
+                'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-semibold',
+                profile.view === dashboardView ? 'bg-[#18181b] text-white' : 'bg-[#e4e4e7] text-[#3f3f46]',
+              )}>
+                {profile.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-[#18181b] leading-none truncate">{profile.name}</p>
+                <p className="text-[10px] text-[#a1a1aa] leading-none mt-0.5 truncate">{profile.email}</p>
+              </div>
+              <span className={cn(
+                'text-[10px] font-medium px-1.5 py-0.5 rounded-full border shrink-0',
+                profile.role === 'Admin'
+                  ? 'bg-[#f0fdf4] text-[#15803d] border-[#bbf7d0]'
+                  : 'bg-[#eff6ff] text-[#3b82f6] border-[#bfdbfe]',
+              )}>
+                {profile.role}
+              </span>
+              {profile.view === dashboardView && (
+                <Check size={12} className="text-[#18181b] shrink-0" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Trigger */}
+      <NavTooltip label={active.name} enabled={isCollapsed}>
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          className={cn(
+            'w-full flex items-center gap-2 rounded-md p-2 hover:bg-[#f4f4f5] transition-colors',
+            isCollapsed && 'justify-center',
+          )}
+        >
+          <div className={cn(
+            'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-semibold',
+            'bg-[#18181b] text-white',
+          )}>
+            {active.initials}
+          </div>
+          {!isCollapsed && (
+            <>
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-[#3f3f46] leading-none truncate">{active.name}</p>
+                  <span className={cn(
+                    'text-[10px] font-medium px-1 py-px rounded-full border shrink-0',
+                    active.role === 'Admin'
+                      ? 'bg-[#f0fdf4] text-[#15803d] border-[#bbf7d0]'
+                      : 'bg-[#eff6ff] text-[#3b82f6] border-[#bfdbfe]',
+                  )}>
+                    {active.role}
+                  </span>
+                </div>
+                <p className="text-xs text-[#3f3f46]/70 leading-none mt-0.5 truncate">{active.email}</p>
+              </div>
+              <ChevronDown size={13} className={cn('text-[#a1a1aa] shrink-0 transition-transform', open && 'rotate-180')} />
+            </>
+          )}
+        </button>
+      </NavTooltip>
     </div>
   );
 }
 
-const BRAND = {
-  name: 'TBS',
-  plan: 'Enterprise',
-  stores: [
-    { id: 'us', label: 'US Store', flag: '🇺🇸' },
-    { id: 'eu', label: 'EU Store', flag: '🇪🇺' },
-    { id: 'uae', label: 'UAE Store', flag: '🇦🇪' },
-    { id: 'sg', label: 'SG Store', flag: '🇸🇬' },
-  ],
-};
+const BRANDS = [
+  { id: 'tbs',  name: 'TBS',  initials: 'TBS', bg: '#18181b', plan: 'Enterprise' },
+  { id: 'nike', name: 'Nike', initials: 'NK',  bg: '#e2231a', plan: 'Pro' },
+];
 
 function BrandDropdown({
   isCollapsed,
@@ -121,8 +242,17 @@ function BrandDropdown({
   onCollapse: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [activeStore, setActiveStore] = useState('us');
+  const [activeBrand, setActiveBrand] = useState(() =>
+    typeof window !== 'undefined' ? (localStorage.getItem('activeBrand') ?? 'tbs') : 'tbs'
+  );
   const ref = useRef<HTMLDivElement>(null);
+  const brand = BRANDS.find(b => b.id === activeBrand) ?? BRANDS[0];
+
+  function selectBrand(id: string) {
+    setActiveBrand(id);
+    localStorage.setItem('activeBrand', id);
+    window.dispatchEvent(new CustomEvent('active-brand-change', { detail: id }));
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -135,63 +265,85 @@ function BrandDropdown({
   return (
     <div className="relative shrink-0" ref={ref}>
       <div className="flex items-center gap-2 p-2">
-        {!isCollapsed && (
-          <button
-            onClick={() => setOpen(v => !v)}
-            className="flex items-center gap-2 flex-1 min-w-0 rounded-md px-1 py-1 hover:bg-[#f4f4f5] transition-colors"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#18181b] flex items-center justify-center shrink-0">
-              <Command size={16} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-semibold text-[#3f3f46] leading-none truncate">{BRAND.name}</span>
-                <ChevronDown size={14} className={cn('text-[#3f3f46] shrink-0 transition-transform', open && 'rotate-180')} />
-              </div>
-              <p className="text-xs text-[#3f3f46] leading-none mt-0.5">{BRAND.plan}</p>
-            </div>
-          </button>
-        )}
-        {!forceCollapsed && (
-          <button
-            onClick={onCollapse}
-            className={cn(
-              'w-8 h-8 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors shrink-0',
-              isCollapsed && 'mx-auto'
+        {isCollapsed ? (
+          /* Collapsed: brand icon with hover-reveal expand button */
+          <div className="relative group mx-auto w-8 h-8">
+            <button
+              onClick={() => setOpen(v => !v)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-[10px]"
+              style={{ backgroundColor: brand.bg }}
+              title={brand.name}
+            >
+              <span className={cn('transition-opacity', !forceCollapsed && 'group-hover:opacity-0')}>{brand.initials}</span>
+            </button>
+            {!forceCollapsed && (
+              <button
+                onClick={onCollapse}
+                className="absolute inset-0 flex items-center justify-center rounded-lg bg-[#f4f4f5] opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Expand sidebar"
+              >
+                <PanelLeft size={16} className="text-[#18181b]" />
+              </button>
             )}
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <PanelLeft size={16} />
-          </button>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setOpen(v => !v)}
+              className="flex items-center gap-2 flex-1 min-w-0 rounded-md px-1 py-1 hover:bg-[#f4f4f5] transition-colors"
+            >
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-[10px]"
+                style={{ backgroundColor: brand.bg }}
+              >
+                {brand.initials}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-semibold text-[#3f3f46] leading-none truncate">{brand.name}</span>
+                  <ChevronDown size={14} className={cn('text-[#3f3f46] shrink-0 transition-transform', open && 'rotate-180')} />
+                </div>
+                <p className="text-xs text-[#3f3f46] leading-none mt-0.5">{brand.plan}</p>
+              </div>
+            </button>
+            {!forceCollapsed && (
+              <button
+                onClick={onCollapse}
+                className="w-8 h-8 flex items-center justify-center rounded-md text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors shrink-0"
+                title="Collapse sidebar"
+              >
+                <PanelLeft size={16} />
+              </button>
+            )}
+          </>
         )}
       </div>
 
       {/* Dropdown */}
-      {open && !isCollapsed && (
-        <div className="absolute left-2 right-2 top-full mt-1 bg-white border border-[#e4e4e7] rounded-xl shadow-lg z-50 overflow-hidden">
-          {/* Brand header */}
-          <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-[#f4f4f5]">
-            <div className="w-7 h-7 rounded-lg bg-[#18181b] flex items-center justify-center shrink-0">
-              <Command size={13} className="text-white" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#18181b] leading-none">{BRAND.name}</p>
-              <p className="text-[10px] text-[#a1a1aa] leading-none mt-0.5">{BRAND.plan}</p>
-            </div>
-          </div>
-
-          {/* Stores */}
+      {open && (
+        <div className={cn(
+          "absolute top-full mt-1 bg-white border border-[#e4e4e7] rounded-xl shadow-lg z-50 overflow-hidden",
+          isCollapsed ? "left-2 w-[200px]" : "left-2 right-2",
+        )}>
+          {/* Brand list */}
           <div className="py-1">
-            <p className="px-3 pt-1 pb-1 text-[10px] font-semibold text-[#a1a1aa] uppercase tracking-wider">Stores</p>
-            {BRAND.stores.map(store => (
+            {BRANDS.map(b => (
               <button
-                key={store.id}
-                onClick={() => { setActiveStore(store.id); setOpen(false); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[#fafafa] transition-colors"
+                key={b.id}
+                onClick={() => { selectBrand(b.id); setOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[#fafafa] transition-colors"
               >
-                <span className="text-base leading-none">{store.flag}</span>
-                <span className="flex-1 text-[#18181b]">{store.label}</span>
-                {activeStore === store.id && (
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-[9px]"
+                  style={{ backgroundColor: b.bg }}
+                >
+                  {b.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-[#18181b] leading-none">{b.name}</p>
+                  <p className="text-[10px] text-[#a1a1aa] leading-none mt-0.5">{b.plan}</p>
+                </div>
+                {activeBrand === b.id && (
                   <Check size={13} className="text-[#16a34a] shrink-0" />
                 )}
               </button>
@@ -218,10 +370,17 @@ function BrandDropdown({
 export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
   const isCollapsed = forceCollapsed || collapsed;
+  const showAsCollapsed = isCollapsed;
   const [evoSearchInstalled, setEvoSearchInstalled] = useState(false);
   const [quizzesInstalled, setQuizzesInstalled] = useState(false);
   const [dashboardView, setDashboardViewState] = useState<DashboardView>('admin');
+  const [insightsCount, setInsightsCount] = useState<number>(() => {
+    if (typeof window === 'undefined') return 4;
+    const stored = localStorage.getItem('insightsOpenCount');
+    return stored !== null ? parseInt(stored, 10) : 4;
+  });
   const pathname = usePathname();
+  const insideApp = pathname.startsWith('/inbox') || pathname.startsWith('/evo-search') || pathname.startsWith('/quizzes');
 
   useEffect(() => {
     setEvoSearchInstalled(localStorage.getItem('evoSearchInstalled') === 'true');
@@ -231,14 +390,17 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
     const onEvoInstall = () => setEvoSearchInstalled(true);
     const onEvoReset = () => setEvoSearchInstalled(false);
     const onQuizzesInstall = () => setQuizzesInstalled(true);
+    const onInsightsChange = (e: Event) => setInsightsCount((e as CustomEvent<number>).detail);
 
     window.addEventListener('evo-search-installed', onEvoInstall);
     window.addEventListener('evo-search-reset', onEvoReset);
     window.addEventListener('quizzes-installed', onQuizzesInstall);
+    window.addEventListener('insights-count-change', onInsightsChange);
     return () => {
       window.removeEventListener('evo-search-installed', onEvoInstall);
       window.removeEventListener('evo-search-reset', onEvoReset);
       window.removeEventListener('quizzes-installed', onQuizzesInstall);
+      window.removeEventListener('insights-count-change', onInsightsChange);
     };
   }, []);
 
@@ -252,19 +414,19 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
     <TooltipProvider delay={0}>
     <div
       className={cn(
-        'flex flex-col h-full bg-[#fafafa] border-r border-[#e5e7eb] shrink-0 transition-all duration-200',
-        isCollapsed ? 'w-[48px]' : 'w-[256px]'
+        'relative flex flex-col h-full bg-[#fafafa] border-r border-[#e5e7eb] shrink-0 transition-all duration-200',
+        showAsCollapsed ? 'w-[48px]' : 'w-[256px]'
       )}
     >
       {/* Header */}
-      <BrandDropdown isCollapsed={isCollapsed} forceCollapsed={forceCollapsed} onCollapse={() => setCollapsed(v => !v)} />
+      <BrandDropdown isCollapsed={showAsCollapsed} forceCollapsed={forceCollapsed} onCollapse={() => setCollapsed(v => !v)} />
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-2 px-2 pb-2 flex-1 overflow-y-auto">
+      <nav className="flex flex-col px-2 pb-2 flex-1 overflow-y-auto overflow-x-hidden">
 
         {/* Dashboard */}
-        <div className={cn('flex flex-col gap-0.5', !forceCollapsed && 'mt-6')}>
-          <NavTooltip label="Dashboard" enabled={isCollapsed}>
+        <div className={cn('flex flex-col gap-0.5', 'mt-2')}>
+          <NavTooltip label="Dashboard" enabled={showAsCollapsed}>
             <Link
               href="/"
               className={cn(
@@ -272,106 +434,85 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
                 pathname === '/'
                   ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
                   : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                isCollapsed && 'justify-center px-0'
+                showAsCollapsed && 'justify-center px-0'
               )}
             >
               <BarChart2 size={16} className={cn('shrink-0', pathname === '/' ? '' : 'opacity-70 group-hover:opacity-100')} />
-              {!isCollapsed && <span>Dashboard</span>}
+              {!showAsCollapsed && <span>Dashboard</span>}
             </Link>
           </NavTooltip>
         </div>
 
-        {/* Apps */}
-        <div className={cn('flex flex-col gap-0.5', !forceCollapsed && 'mt-6')}>
-          {!isCollapsed && (
-            <p className="px-2 pt-1 text-[12px] leading-4 font-medium text-[#3f3f46]/70">Apps</p>
-          )}
-          {isCollapsed && <div className="border-t border-[#e5e7eb] my-1" />}
+        {/* Apps — hidden when inside one of the three apps */}
+        {!insideApp && (
+          <div className={cn('flex flex-col gap-0.5', 'mt-2')}>
+            <div className="border-t border-[#e5e7eb] mb-1" />
 
-          {/* Support Agent */}
-          <NavTooltip label="Support Agent" enabled={isCollapsed}>
-            <Link
-              href="/inbox"
-              className={cn(
-                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
-                pathname.startsWith('/inbox')
-                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                isCollapsed && 'justify-center px-0'
-              )}
-            >
-              <Inbox size={16} className={cn('shrink-0', pathname.startsWith('/inbox') ? '' : 'opacity-70 group-hover:opacity-100')} />
-              {!isCollapsed && <span>Support Agent</span>}
-            </Link>
-          </NavTooltip>
+            {/* Ticket Inbox (Support Agent) */}
+            <NavTooltip label="Open Ticket Inbox" enabled={showAsCollapsed}>
+              <Link
+                href="/inbox"
+                className={cn(
+                  showAsCollapsed
+                    ? cn(
+                        'group flex items-center justify-center rounded-md h-8 text-[14px] transition-colors w-8',
+                        'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                      )
+                    : 'flex items-center justify-center rounded-md px-2 h-8 text-[13px] font-medium transition-colors bg-[#18181b] text-white hover:bg-[#27272a] mt-2 mb-3'
+                )}
+              >
+                {showAsCollapsed
+                  ? <Inbox size={15} className="shrink-0 opacity-70 group-hover:opacity-100" />
+                  : <span>Open Ticket Inbox</span>
+                }
+              </Link>
+            </NavTooltip>
 
-          {/* Sales Agent */}
-          <NavTooltip label="Sales Agent" enabled={isCollapsed}>
-            <Link
-              href="/sales-agent/analytics"
-              className={cn(
-                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
-                pathname.startsWith('/sales-agent')
-                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                isCollapsed && 'justify-center px-0'
-              )}
-            >
-              <ShoppingBag size={16} className={cn('shrink-0', pathname.startsWith('/sales-agent') ? '' : 'opacity-70 group-hover:opacity-100')} />
-              {!isCollapsed && <span>Sales Agent</span>}
-            </Link>
-          </NavTooltip>
+            {/* Evo Search */}
+            <NavTooltip label="Evo Search" enabled={showAsCollapsed}>
+              <Link
+                href={evoSearchInstalled ? '/evo-search/analytics' : '/evo-search/install'}
+                className={cn(
+                  'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                  'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                  showAsCollapsed && 'justify-center px-0'
+                )}
+              >
+                <Search size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
+                {!showAsCollapsed && <span>Evo Search</span>}
+              </Link>
+            </NavTooltip>
 
-          {/* Evo Search */}
-          <NavTooltip label="Evo Search" enabled={isCollapsed}>
-            <Link
-              href={evoSearchInstalled ? '/evo-search/analytics' : '/evo-search/install'}
-              className={cn(
-                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
-                pathname.startsWith('/evo-search')
-                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                isCollapsed && 'justify-center px-0'
-              )}
-            >
-              <Search size={16} className={cn('shrink-0', pathname.startsWith('/evo-search') ? '' : 'opacity-70 group-hover:opacity-100')} />
-              {!isCollapsed && <span>Evo Search</span>}
-            </Link>
-          </NavTooltip>
+            {/* Quizzes */}
+            <NavTooltip label="Quizzes" enabled={showAsCollapsed}>
+              <Link
+                href={quizzesInstalled ? '/quizzes' : '/quizzes/install'}
+                className={cn(
+                  'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                  'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                  showAsCollapsed && 'justify-center px-0'
+                )}
+              >
+                <FileQuestion size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
+                {!showAsCollapsed && <span>Quizzes</span>}
+              </Link>
+            </NavTooltip>
+          </div>
+        )}
 
-          {/* Quizzes */}
-          <NavTooltip label="Quizzes" enabled={isCollapsed}>
-            <Link
-              href={quizzesInstalled ? '/quizzes' : '/quizzes/install'}
-              className={cn(
-                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
-                pathname.startsWith('/quizzes')
-                  ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
-                  : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                isCollapsed && 'justify-center px-0'
-              )}
-            >
-              <FileQuestion size={16} className={cn('shrink-0', pathname.startsWith('/quizzes') ? '' : 'opacity-70 group-hover:opacity-100')} />
-              {!isCollapsed && <span>Quizzes</span>}
-            </Link>
-          </NavTooltip>
-        </div>
-
-        {/* Workflows */}
-        <WorkflowsNavItem isCollapsed={isCollapsed} forceCollapsed={forceCollapsed} pathname={pathname} />
-
-        {/* Knowledge Base */}
-        <div className={cn('flex flex-col gap-0.5', !forceCollapsed && 'mt-6')}>
-          {isCollapsed && <div className="border-t border-[#e5e7eb] my-1" />}
-          <NavTooltip label="Knowledge Base" enabled={isCollapsed}>
+        {/* Workflows + Knowledge Base */}
+        <div className="flex flex-col gap-0.5 mt-2">
+          <div className="border-t border-[#e5e7eb] mb-1" />
+          <WorkflowsNavItem isCollapsed={showAsCollapsed} forceCollapsed={forceCollapsed} pathname={pathname} insightsCount={insightsCount} />
+          <NavTooltip label="Knowledge Base" enabled={showAsCollapsed}>
             <button
               className={cn(
                 'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
-                isCollapsed && 'justify-center px-0'
+                showAsCollapsed && 'justify-center px-0'
               )}
             >
               <BookOpen size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
-              {!isCollapsed && <span>Knowledge Base</span>}
+              {!showAsCollapsed && <span>Knowledge Base</span>}
             </button>
           </NavTooltip>
         </div>
@@ -379,70 +520,10 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-[#e5e7eb] bg-[#fafafa] p-2 shrink-0">
-
-        {/* Admin / Agent toggle */}
-        {!isCollapsed && (
-          <div className="mb-3">
-            <p className="px-2 text-[10px] font-medium text-[#a1a1aa] uppercase tracking-wide mb-1.5">Dashboard view</p>
-            <div className="flex items-center bg-[#f4f4f5] rounded-lg p-0.5 gap-0.5">
-              <button
-                onClick={() => toggleView('admin')}
-                className={cn(
-                  'flex-1 text-xs font-medium rounded-md px-2 py-1.5 transition-all',
-                  dashboardView === 'admin'
-                    ? 'bg-white text-[#18181b] shadow-sm'
-                    : 'text-[#71717a] hover:text-[#3f3f46]'
-                )}
-              >
-                Admin
-              </button>
-              <button
-                onClick={() => toggleView('agent')}
-                className={cn(
-                  'flex-1 text-xs font-medium rounded-md px-2 py-1.5 transition-all',
-                  dashboardView === 'agent'
-                    ? 'bg-white text-[#18181b] shadow-sm'
-                    : 'text-[#71717a] hover:text-[#3f3f46]'
-                )}
-              >
-                Agent
-              </button>
-            </div>
-          </div>
-        )}
-
-        {isCollapsed && !forceCollapsed && (
-          <div className="flex flex-col gap-0.5 mb-2">
-            <button
-              onClick={() => toggleView('admin')}
-              className={cn(
-                'w-full h-7 rounded-md text-[10px] font-bold transition-colors',
-                dashboardView === 'admin'
-                  ? 'bg-[#18181b] text-white'
-                  : 'text-[#71717a] hover:bg-[#f4f4f5]'
-              )}
-              title="Admin view"
-            >
-              A
-            </button>
-            <button
-              onClick={() => toggleView('agent')}
-              className={cn(
-                'w-full h-7 rounded-md text-[10px] font-bold transition-colors',
-                dashboardView === 'agent'
-                  ? 'bg-[#18181b] text-white'
-                  : 'text-[#71717a] hover:bg-[#f4f4f5]'
-              )}
-              title="Agent view"
-            >
-              Ag
-            </button>
-          </div>
-        )}
+      <div className="border-t border-[#e5e7eb] bg-[#fafafa] p-2 shrink-0 overflow-x-hidden">
 
         <div className="flex flex-col gap-0.5 mb-2">
-          <NavTooltip label="Team" enabled={isCollapsed}>
+          <NavTooltip label="Team" enabled={showAsCollapsed}>
             <Link
               href="/team"
               className={cn(
@@ -450,25 +531,25 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
                 pathname === '/team'
                   ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
                   : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                isCollapsed && 'justify-center px-0'
+                showAsCollapsed && 'justify-center px-0'
               )}
             >
               <UsersRound size={16} className={cn('shrink-0', pathname === '/team' ? '' : 'opacity-70 group-hover:opacity-100')} />
-              {!isCollapsed && <span>Team</span>}
+              {!showAsCollapsed && <span>Team</span>}
             </Link>
           </NavTooltip>
-          <NavTooltip label="Support" enabled={isCollapsed}>
+          <NavTooltip label="Support" enabled={showAsCollapsed}>
             <button
               className={cn(
                 'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
-                isCollapsed && 'justify-center px-0'
+                showAsCollapsed && 'justify-center px-0'
               )}
             >
               <HelpCircle size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
-              {!isCollapsed && <span>Support</span>}
+              {!showAsCollapsed && <span>Support</span>}
             </button>
           </NavTooltip>
-          <NavTooltip label="Store Management" enabled={isCollapsed}>
+          <NavTooltip label="Store Management" enabled={showAsCollapsed}>
             <Link
               href="/store-management"
               className={cn(
@@ -476,32 +557,21 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
                 pathname === '/store-management'
                   ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
                   : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                isCollapsed && 'justify-center px-0'
+                showAsCollapsed && 'justify-center px-0'
               )}
             >
               <Store size={16} className={cn('shrink-0', pathname === '/store-management' ? '' : 'opacity-70 group-hover:opacity-100')} />
-              {!isCollapsed && <span>Store Management</span>}
+              {!showAsCollapsed && <span>Store Management</span>}
             </Link>
           </NavTooltip>
         </div>
 
-        {/* User profile */}
-        <div
-          className={cn(
-            'flex items-center gap-2 rounded-md p-2 hover:bg-[#f4f4f5] transition-colors cursor-pointer',
-            isCollapsed && 'justify-center'
-          )}
-        >
-          <div className="w-8 h-8 rounded-lg bg-[#e4e4e7] shrink-0 flex items-center justify-center">
-            <span className="text-xs font-semibold text-[#3f3f46]">SJ</span>
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-[#3f3f46] leading-none truncate">Sarah Jones</p>
-              <p className="text-xs text-[#3f3f46]/70 leading-none mt-0.5 truncate">sarah.jones@example.com</p>
-            </div>
-          )}
-        </div>
+        {/* Profile switcher */}
+        <ProfileSwitcher
+          isCollapsed={showAsCollapsed}
+          dashboardView={dashboardView}
+          onSwitch={toggleView}
+        />
       </div>
     </div>
     </TooltipProvider>
