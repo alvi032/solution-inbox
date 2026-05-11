@@ -7,7 +7,7 @@ import Link from 'next/link';
 import {
   Search, Plus, X, MoreHorizontal, ShoppingBag,
   Mail, MessageSquare, Globe, ExternalLink, ChevronRight,
-  Check,
+  Check, Store as StoreIcon,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -541,12 +541,52 @@ function ActionsMenu({ store }: { store: Store }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────
 
+function AltOnboardingIntroModal({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-end pointer-events-none">
+      {/* Backdrop — only covers non-top-right area */}
+      <div className="absolute inset-0 pointer-events-auto" onClick={onDismiss} />
+
+      {/* Tooltip card anchored near the Add Store button (top-right) */}
+      <div className="relative pointer-events-auto mt-[72px] mr-6 w-[280px] bg-[#18181b] text-white rounded-2xl shadow-xl p-4">
+        {/* Arrow pointing up-right toward the button */}
+        <div className="absolute -top-2 right-5 w-4 h-4 bg-[#18181b] rotate-45 rounded-sm" />
+
+        <p className="text-sm font-semibold mb-1 relative z-10">Add your first store</p>
+        <p className="text-xs text-white/70 leading-relaxed relative z-10">
+          Click the <strong className="text-white font-semibold">Add Store</strong> button above to connect your e-commerce platform and get started.
+        </p>
+        <button
+          onClick={onDismiss}
+          className="mt-3 text-[11px] font-medium text-white/50 hover:text-white transition-colors relative z-10"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function StoreManagementPage() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'inactive'>('all');
   const [selectedStore, setSelectedStore] = useState<Store | null>(STORES[0]);
+  const [isAltOnboarding, setIsAltOnboarding] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(false);
 
-  const filtered = STORES.filter(s => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('onboarding') === 'alt') {
+      setIsAltOnboarding(true);
+      setShowIntroModal(true);
+      setSelectedStore(null);
+    }
+  }, []);
+
+  const stores = isAltOnboarding ? [] : STORES;
+  const addStoreHref = isAltOnboarding ? '/store-management/new?onboarding=alt' : '/store-management/new';
+
+  const filtered = stores.filter(s => {
     const matchesSearch =
       s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.brand.toLowerCase().includes(search.toLowerCase()) ||
@@ -555,9 +595,10 @@ export default function StoreManagementPage() {
     return matchesSearch && matchesTab;
   });
 
-  const inactiveCount = STORES.filter(s => s.status === 'inactive').length;
+  const inactiveCount = stores.filter(s => s.status === 'inactive').length;
 
   return (
+    <>
     <div className="flex h-screen overflow-hidden bg-white">
       <AppSidebar />
 
@@ -575,7 +616,7 @@ export default function StoreManagementPage() {
                   <p className="text-sm text-[#71717a] mt-0.5">View and manage all stores across your brands.</p>
                 </div>
                 <Link
-                  href="/store-management/new"
+                  href={addStoreHref}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#18181b] text-white hover:bg-[#27272a] transition-colors shrink-0"
                 >
                   <Plus size={13} />
@@ -606,7 +647,7 @@ export default function StoreManagementPage() {
                       : 'border-transparent text-[#71717a] hover:text-[#3f3f46]',
                   )}
                 >
-                  All Stores ({STORES.length})
+                  All Stores ({stores.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('inactive')}
@@ -630,7 +671,6 @@ export default function StoreManagementPage() {
                       <th className="text-left px-4 py-3 text-xs font-medium text-[#71717a]">Brand</th>
                       <th className="text-left px-4 py-3 text-xs font-medium text-[#71717a]">Region</th>
                       <th className="text-left px-4 py-3 text-xs font-medium text-[#71717a]">Integrations</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-[#71717a]">Workflow State</th>
                       <th className="text-left px-4 py-3 text-xs font-medium text-[#71717a]">Status</th>
                       <th className="px-4 py-3 w-8" />
                     </tr>
@@ -638,8 +678,20 @@ export default function StoreManagementPage() {
                   <tbody>
                     {filtered.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-5 py-12 text-center text-sm text-[#a1a1aa]">
-                          No stores match your search.
+                        <td colSpan={6} className="px-5 py-16 text-center">
+                          {isAltOnboarding ? (
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="w-12 h-12 rounded-2xl bg-[#f4f4f5] flex items-center justify-center">
+                                <StoreIcon size={22} className="text-[#a1a1aa]" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-[#18181b]">No stores yet</p>
+                                <p className="text-xs text-[#a1a1aa] mt-0.5">Click <strong className="text-[#18181b] font-semibold">Add Store</strong> in the top right to connect your first store.</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-[#a1a1aa]">No stores match your search.</span>
+                          )}
                         </td>
                       </tr>
                     ) : filtered.map(store => {
@@ -684,11 +736,6 @@ export default function StoreManagementPage() {
                             <IntegrationIcons integrations={store.integrations} />
                           </td>
 
-                          {/* Workflow State */}
-                          <td className="px-4 py-3.5">
-                            <WorkflowBadge state={store.workflowState} />
-                          </td>
-
                           {/* Status */}
                           <td className="px-4 py-3.5">
                             <StatusDot status={store.status} />
@@ -719,5 +766,12 @@ export default function StoreManagementPage() {
         </div>
       </div>
     </div>
+
+    {showIntroModal && (
+      <AltOnboardingIntroModal
+        onDismiss={() => setShowIntroModal(false)}
+      />
+    )}
+    </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import AppSidebar, { getDashboardView, type DashboardView } from '@/components/app-sidebar';
-import ResetButton from '@/components/reset-button';
+import FloatingOptions from '@/components/floating-options';
 import {
   Inbox,
   Clock,
@@ -1334,7 +1334,7 @@ export default function DashboardPage() {
           {view === 'admin' ? <AdminDashboard /> : <AgentDashboard />}
         </div>
       </main>
-      <ResetButton />
+      <FloatingOptions />
       {previewOpen && <PreviewModal onClose={() => setPreviewOpen(false)} />}
     </div>
   );

@@ -21,6 +21,8 @@ import {
   Store,
   Plus,
   Check,
+  MessageSquare,
+  Layers,
 } from 'lucide-react';
 
 export type DashboardView = 'admin' | 'agent';
@@ -367,7 +369,7 @@ function BrandDropdown({
   );
 }
 
-export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?: boolean }) {
+export default function AppSidebar({ forceCollapsed = false, onboardingActive = false, altOnboarding = false }: { forceCollapsed?: boolean; onboardingActive?: boolean; altOnboarding?: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
   const isCollapsed = forceCollapsed || collapsed;
   const showAsCollapsed = isCollapsed;
@@ -443,30 +445,46 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
           </NavTooltip>
         </div>
 
-        {/* Apps — hidden when inside one of the three apps */}
+        {/* Apps */}
         {!insideApp && (
-          <div className={cn('flex flex-col gap-0.5', 'mt-2')}>
+          <div className={cn('flex flex-col gap-0.5', 'mt-2', onboardingActive && 'opacity-40 pointer-events-none')}>
             <div className="border-t border-[#e5e7eb] mb-1" />
 
-            {/* Ticket Inbox (Support Agent) */}
-            <NavTooltip label="Open Ticket Inbox" enabled={showAsCollapsed}>
-              <Link
-                href="/inbox"
-                className={cn(
-                  showAsCollapsed
-                    ? cn(
-                        'group flex items-center justify-center rounded-md h-8 text-[14px] transition-colors w-8',
-                        'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
-                      )
-                    : 'flex items-center justify-center rounded-md px-2 h-8 text-[13px] font-medium transition-colors bg-[#18181b] text-white hover:bg-[#27272a] mt-2 mb-3'
-                )}
-              >
-                {showAsCollapsed
-                  ? <Inbox size={15} className="shrink-0 opacity-70 group-hover:opacity-100" />
-                  : <span>Open Ticket Inbox</span>
-                }
-              </Link>
-            </NavTooltip>
+            {altOnboarding ? (
+              /* Alt onboarding: Support Agent as regular nav item */
+              <NavTooltip label="Support Agent" enabled={showAsCollapsed}>
+                <Link
+                  href="/inbox"
+                  className={cn(
+                    'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                    pathname.startsWith('/inbox')
+                      ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                      : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                    showAsCollapsed && 'justify-center px-0'
+                  )}
+                >
+                  <MessageSquare size={16} className={cn('shrink-0', pathname.startsWith('/inbox') ? '' : 'opacity-70 group-hover:opacity-100')} />
+                  {!showAsCollapsed && <span>Support Agent</span>}
+                </Link>
+              </NavTooltip>
+            ) : (
+              /* Normal: Open Ticket Inbox CTA */
+              <NavTooltip label="Open Ticket Inbox" enabled={showAsCollapsed}>
+                <Link
+                  href="/inbox"
+                  className={cn(
+                    showAsCollapsed
+                      ? cn('group flex items-center justify-center rounded-md h-8 text-[14px] transition-colors w-8',
+                          'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]')
+                      : 'flex items-center justify-center rounded-md px-2 h-8 text-[13px] font-medium transition-colors bg-[#18181b] text-white hover:bg-[#27272a] mt-2 mb-3'
+                  )}
+                >
+                  {showAsCollapsed
+                    ? <Inbox size={15} className="shrink-0 opacity-70 group-hover:opacity-100" />
+                    : <span>Open Ticket Inbox</span>}
+                </Link>
+              </NavTooltip>
+            )}
 
             {/* Evo Search */}
             <NavTooltip label="Evo Search" enabled={showAsCollapsed}>
@@ -497,11 +515,28 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
                 {!showAsCollapsed && <span>Quizzes</span>}
               </Link>
             </NavTooltip>
+
+            {/* Popups */}
+            <NavTooltip label="Popups" enabled={showAsCollapsed}>
+              <Link
+                href="/popups"
+                className={cn(
+                  'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                  pathname.startsWith('/popups')
+                    ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                    : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                  showAsCollapsed && 'justify-center px-0'
+                )}
+              >
+                <Layers size={16} className={cn('shrink-0', pathname.startsWith('/popups') ? '' : 'opacity-70 group-hover:opacity-100')} />
+                {!showAsCollapsed && <span>Popups</span>}
+              </Link>
+            </NavTooltip>
           </div>
         )}
 
-        {/* Workflows + Knowledge Base */}
-        <div className="flex flex-col gap-0.5 mt-2">
+        {/* Workflows + Knowledge Base — hidden in alt onboarding */}
+        {!altOnboarding && <div className={cn('flex flex-col gap-0.5 mt-2', onboardingActive && 'opacity-40 pointer-events-none')}>
           <div className="border-t border-[#e5e7eb] mb-1" />
           <WorkflowsNavItem isCollapsed={showAsCollapsed} forceCollapsed={forceCollapsed} pathname={pathname} insightsCount={insightsCount} />
           <NavTooltip label="Knowledge Base" enabled={showAsCollapsed}>
@@ -515,14 +550,14 @@ export default function AppSidebar({ forceCollapsed = false }: { forceCollapsed?
               {!showAsCollapsed && <span>Knowledge Base</span>}
             </button>
           </NavTooltip>
-        </div>
+        </div>}
 
       </nav>
 
       {/* Footer */}
       <div className="border-t border-[#e5e7eb] bg-[#fafafa] p-2 shrink-0 overflow-x-hidden">
 
-        <div className="flex flex-col gap-0.5 mb-2">
+        <div className={cn('flex flex-col gap-0.5 mb-2', onboardingActive && 'opacity-40 pointer-events-none')}>
           <NavTooltip label="Team" enabled={showAsCollapsed}>
             <Link
               href="/team"

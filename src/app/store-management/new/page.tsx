@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import AppSidebar from '@/components/app-sidebar';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, ShoppingBag, Mail, MessageSquare, Globe,
-  Check, ChevronDown, Store, ExternalLink, Sparkles,
+  Check, ChevronDown, Store, ExternalLink, Sparkles, MoreHorizontal,
 } from 'lucide-react';
 
 // ─── Data ─────────────────────────────────────────────────────────────
@@ -29,6 +30,15 @@ const INTEGRATIONS = [
   { id: 'whatsapp',  name: 'WhatsApp',  icon: MessageSquare },
   { id: 'instagram', name: 'Instagram', icon: Globe },
   { id: 'facebook',  name: 'Facebook',  icon: Globe },
+];
+
+const WORKFLOWS = [
+  { id: 'order-status',     name: 'Order Status Update',       type: 'Support' },
+  { id: 'return-refund',    name: 'Return & Refund Handler',   type: 'Support' },
+  { id: 'shipping-delay',   name: 'Shipping Delay Alert',      type: 'Support' },
+  { id: 'product-inquiry',  name: 'Product Inquiry Response',  type: 'Support' },
+  { id: 'abandoned-cart',   name: 'Abandoned Cart Recovery',   type: 'Sales'   },
+  { id: 'post-purchase',    name: 'Post-Purchase Follow-up',   type: 'Sales'   },
 ];
 
 // ─── Small shared components ──────────────────────────────────────────
@@ -141,23 +151,127 @@ function Dropdown<T extends string>({
 
 // ─── Page ─────────────────────────────────────────────────────────────
 
+// ─── Add Brand Modal ──────────────────────────────────────────────────
+
+function AddBrandModal({ onSave, onClose }: { onSave: (name: string) => void; onClose: () => void }) {
+  const [name, setName] = useState('');
+
+  function handleSave() {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    onSave(trimmed);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+
+      {/* Dialog */}
+      <div className="relative bg-white rounded-2xl shadow-xl w-[360px] p-6">
+        <p className="text-sm font-semibold text-[#18181b] mb-1">Add New Brand</p>
+        <p className="text-xs text-[#71717a] mb-4">Enter a name for the new brand.</p>
+
+        <label className="block text-[11px] font-semibold text-[#71717a] uppercase tracking-wider mb-1.5">
+          Brand Name<span className="text-[#dc2626] ml-0.5 normal-case tracking-normal">*</span>
+        </label>
+        <input
+          autoFocus
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onClose(); }}
+          placeholder="e.g. Nike"
+          className="w-full rounded-lg border border-[#e4e4e7] px-3 py-2 text-sm text-[#18181b] placeholder:text-[#d4d4d8] outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-[#7c3aed]/10 transition-colors mb-5"
+        />
+
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#e4e4e7] text-[#3f3f46] hover:border-[#a1a1aa] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!name.trim()}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#18181b] text-white hover:bg-[#27272a] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Add Brand
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────
+
 export default function NewStorePage() {
+  const router = useRouter();
+  const [isAltOnboarding, setIsAltOnboarding] = useState(false);
   const [storeName, setStoreName]   = useState('');
   const [storeUrl, setStoreUrl]     = useState('');
+  const [brands, setBrands]         = useState<string[]>(BRANDS);
   const [brand, setBrand]           = useState('');
+  const [showAddBrand, setShowAddBrand] = useState(false);
   const [regionKey, setRegionKey]   = useState('');
-  const [active, setActive]         = useState(true);
-  const [integrations, setIntegrations] = useState<string[]>(['shopify']);
-  const [workflow, setWorkflow]     = useState<'inherit' | 'separate'>('inherit');
+  const [active, setActive]           = useState(true);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsAltOnboarding(params.get('onboarding') === 'alt');
+  }, []);
+  // configured = has been set up; integEnabled = active/inactive (only for configured)
+  const [configured, setConfigured]   = useState<string[]>(['shopify']);
+  const [integEnabled, setIntegEnabled] = useState<string[]>(['shopify']);
+  const [workflowsOpen, setWorkflowsOpen] = useState(false);
+  const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>(WORKFLOWS.map(w => w.id));
 
   const region = REGIONS.find(r => r.name === regionKey) ?? null;
 
-  function toggleIntegration(id: string) {
-    setIntegrations(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  function configureIntegration(id: string) {
+    setConfigured(prev => prev.includes(id) ? prev : [...prev, id]);
+    setIntegEnabled(prev => prev.includes(id) ? prev : [...prev, id]);
   }
 
+  function toggleIntegEnabled(id: string) {
+    setIntegEnabled(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  }
+
+  function toggleWorkflow(id: string) {
+    setSelectedWorkflows(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]);
+  }
+
+  function toggleAllWorkflows() {
+    setSelectedWorkflows(prev => prev.length === WORKFLOWS.length ? [] : WORKFLOWS.map(w => w.id));
+  }
+
+  function handleBrandChange(value: string) {
+    if (value === '__new__') { setShowAddBrand(true); return; }
+    setBrand(value);
+  }
+
+  function handleAddBrand(name: string) {
+    setBrands(prev => [...prev, name]);
+    setBrand(name);
+    setShowAddBrand(false);
+  }
+
+  function handleSaveStore() {
+    if (isAltOnboarding) {
+      router.push('/onboarding/alt?completed=connect');
+    } else {
+      router.push('/store-management');
+    }
+  }
+
+  const backHref = isAltOnboarding ? '/store-management?onboarding=alt' : '/store-management';
+
   const brandOptions = [
-    ...BRANDS.map(b => ({ value: b, label: b, dividerAfter: b === BRANDS[BRANDS.length - 1] })),
+    ...brands.map((b, i) => ({ value: b, label: b, dividerAfter: i === brands.length - 1 })),
     { value: '__new__',    label: '+ Add New Brand',  dim: true },
     { value: '__manage__', label: 'Manage Brands',    dim: true },
   ] as { value: string; label: string; dividerAfter?: boolean; dim?: boolean }[];
@@ -172,19 +286,22 @@ export default function NewStorePage() {
 
         {/* ── Header ── */}
         <header className="flex items-center gap-4 px-6 py-3 border-b border-[#e4e4e7] bg-white shrink-0">
-          <Link href="/store-management" className="flex items-center gap-1.5 text-xs text-[#71717a] hover:text-[#18181b] transition-colors shrink-0">
+          <Link href={backHref} className="flex items-center gap-1.5 text-xs text-[#71717a] hover:text-[#18181b] transition-colors shrink-0">
             <ArrowLeft size={13} />
-            Stores
+            {isAltOnboarding ? 'Back' : 'Stores'}
           </Link>
           <div className="w-px h-4 bg-[#e4e4e7]" />
           <span className="text-sm font-semibold text-[#18181b]">Add New Store</span>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
-            <Link href="/store-management" className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#e4e4e7] text-[#3f3f46] hover:border-[#a1a1aa] transition-colors">
+            <Link href={backHref} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#e4e4e7] text-[#3f3f46] hover:border-[#a1a1aa] transition-colors">
               Cancel
             </Link>
-            <button className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#18181b] text-white hover:bg-[#27272a] transition-colors">
-              Save Store
+            <button
+              onClick={handleSaveStore}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#18181b] text-white hover:bg-[#27272a] transition-colors"
+            >
+              {isAltOnboarding ? 'Connect Store' : 'Save Store'}
             </button>
           </div>
         </header>
@@ -240,7 +357,7 @@ export default function NewStorePage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <FieldLabel required>Brand</FieldLabel>
-                      <Dropdown value={brand} onChange={setBrand} options={brandOptions} placeholder="Select brand" />
+                      <Dropdown value={brand} onChange={handleBrandChange} options={brandOptions} placeholder="Select brand" />
                     </div>
                     <div>
                       <FieldLabel required>Region</FieldLabel>
@@ -267,77 +384,133 @@ export default function NewStorePage() {
                 </div>
 
                 {/* Section 3: Integrations */}
-                <div className="bg-white rounded-xl border border-[#e4e4e7] p-4">
-                  <p className="text-xs font-semibold text-[#18181b] uppercase tracking-wider mb-3">Integrations</p>
-                  <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white rounded-xl border border-[#e4e4e7] overflow-hidden">
+                  <p className="text-xs font-semibold text-[#18181b] uppercase tracking-wider px-4 pt-3 pb-2">Integrations</p>
+                  <div className="divide-y divide-[#f4f4f5]">
                     {INTEGRATIONS.map(integration => {
                       const Icon = integration.icon;
-                      const enabled = integrations.includes(integration.id);
+                      const isCfg = configured.includes(integration.id);
+                      const isOn  = integEnabled.includes(integration.id);
                       return (
-                        <button
-                          key={integration.id}
-                          type="button"
-                          onClick={() => toggleIntegration(integration.id)}
-                          className={cn(
-                            'flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border text-left transition-colors',
-                            enabled
-                              ? 'border-[#7c3aed] bg-[#faf5ff]'
-                              : 'border-[#e4e4e7] hover:border-[#a1a1aa] bg-white',
+                        <div key={integration.id} className="flex items-center gap-3 px-4 py-2.5">
+                          {/* Icon + Name */}
+                          <Icon size={13} className={isCfg ? 'text-[#7c3aed] shrink-0' : 'text-[#a1a1aa] shrink-0'} />
+                          <span className={cn('text-xs font-medium flex-1 min-w-0 truncate', isCfg ? 'text-[#18181b]' : 'text-[#71717a]')}>
+                            {integration.name}
+                          </span>
+
+                          {/* Configure (unconfigured) OR options + toggle (configured) */}
+                          {isCfg ? (
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                className="w-6 h-6 flex items-center justify-center rounded-md text-[#a1a1aa] hover:text-[#71717a] hover:bg-[#f4f4f5] transition-colors"
+                                title="Options"
+                              >
+                                <MoreHorizontal size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleIntegEnabled(integration.id)}
+                                className={cn(
+                                  'relative w-7 h-4 rounded-full transition-colors',
+                                  isOn ? 'bg-[#7c3aed]' : 'bg-[#e4e4e7]',
+                                )}
+                              >
+                                <span className={cn(
+                                  'absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform',
+                                  isOn ? 'translate-x-3' : 'translate-x-0',
+                                )} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => configureIntegration(integration.id)}
+                              className="text-[11px] font-medium text-[#7c3aed] hover:text-[#6d28d9] transition-colors shrink-0"
+                            >
+                              Configure
+                            </button>
                           )}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Icon size={13} className={enabled ? 'text-[#7c3aed]' : 'text-[#a1a1aa]'} />
-                            <span className={cn('text-xs font-medium truncate', enabled ? 'text-[#7c3aed]' : 'text-[#3f3f46]')}>
-                              {integration.name}
-                            </span>
-                          </div>
-                          <div className={cn(
-                            'relative w-6 h-3.5 rounded-full transition-colors shrink-0',
-                            enabled ? 'bg-[#7c3aed]' : 'bg-[#e4e4e7]',
-                          )}>
-                            <span className={cn(
-                              'absolute top-0.5 left-0.5 w-2.5 h-2.5 bg-white rounded-full shadow-sm transition-transform',
-                              enabled ? 'translate-x-2.5' : 'translate-x-0',
-                            )} />
-                          </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
                 </div>
 
                 {/* Section 4: Workflow Setup */}
-                <div className="bg-white rounded-xl border border-[#e4e4e7] p-4">
-                  <p className="text-xs font-semibold text-[#18181b] uppercase tracking-wider mb-3">Workflow Setup</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {([
-                      { value: 'inherit',  label: 'Inherit from brand',    hint: 'Uses brand-level workflows automatically.' },
-                      { value: 'separate', label: 'Configure separately',  hint: 'Set up independent store-specific workflows.' },
-                    ] as const).map(opt => (
+                <div className="bg-white rounded-xl border border-[#e4e4e7] overflow-hidden">
+                  {/* Header — always visible */}
+                  <button
+                    type="button"
+                    onClick={() => setWorkflowsOpen(v => !v)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#fafafa] transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-semibold text-[#18181b] uppercase tracking-wider">Workflow Setup</p>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#f4f4f5] text-[#71717a] border border-[#e4e4e7]">
+                        {selectedWorkflows.length} / {WORKFLOWS.length} selected
+                      </span>
+                    </div>
+                    <ChevronDown size={13} className={cn('text-[#a1a1aa] transition-transform shrink-0', workflowsOpen && 'rotate-180')} />
+                  </button>
+
+                  {/* Expandable workflow list */}
+                  {workflowsOpen && (
+                    <div className="border-t border-[#f4f4f5]">
+                      {/* Select all row */}
                       <button
-                        key={opt.value}
                         type="button"
-                        onClick={() => setWorkflow(opt.value)}
-                        className={cn(
-                          'flex items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-colors',
-                          workflow === opt.value
-                            ? 'border-[#18181b] bg-[#fafafa]'
-                            : 'border-[#e4e4e7] hover:border-[#a1a1aa]',
-                        )}
+                        onClick={toggleAllWorkflows}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#fafafa] transition-colors border-b border-[#f4f4f5]"
                       >
                         <div className={cn(
-                          'w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5',
-                          workflow === opt.value ? 'border-[#18181b]' : 'border-[#d4d4d8]',
+                          'w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors',
+                          selectedWorkflows.length === WORKFLOWS.length
+                            ? 'bg-[#18181b] border-[#18181b]'
+                            : selectedWorkflows.length > 0
+                            ? 'bg-[#18181b] border-[#18181b]'
+                            : 'border-[#d4d4d8]',
                         )}>
-                          {workflow === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-[#18181b]" />}
+                          {selectedWorkflows.length === WORKFLOWS.length ? (
+                            <Check size={9} className="text-white" strokeWidth={3} />
+                          ) : selectedWorkflows.length > 0 ? (
+                            <div className="w-1.5 h-px bg-white" />
+                          ) : null}
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-[#18181b]">{opt.label}</p>
-                          <p className="text-[11px] text-[#71717a] mt-0.5 leading-snug">{opt.hint}</p>
-                        </div>
+                        <span className="text-xs font-medium text-[#18181b]">Select all</span>
                       </button>
-                    ))}
-                  </div>
+
+                      {/* Individual workflows */}
+                      {WORKFLOWS.map(wf => {
+                        const checked = selectedWorkflows.includes(wf.id);
+                        return (
+                          <button
+                            key={wf.id}
+                            type="button"
+                            onClick={() => toggleWorkflow(wf.id)}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#fafafa] transition-colors group"
+                          >
+                            <div className={cn(
+                              'w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors',
+                              checked ? 'bg-[#18181b] border-[#18181b]' : 'border-[#d4d4d8] group-hover:border-[#a1a1aa]',
+                            )}>
+                              {checked && <Check size={9} className="text-white" strokeWidth={3} />}
+                            </div>
+                            <span className="flex-1 text-xs text-left text-[#3f3f46]">{wf.name}</span>
+                            <span className={cn(
+                              'text-[10px] font-medium px-1.5 py-0.5 rounded-full border shrink-0',
+                              wf.type === 'Support'
+                                ? 'bg-[#eff6ff] text-[#3b82f6] border-[#bfdbfe]'
+                                : 'bg-[#fdf4ff] text-[#a855f7] border-[#e9d5ff]',
+                            )}>
+                              {wf.type}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -376,9 +549,9 @@ export default function NewStorePage() {
                       <span className={cn('w-1 h-1 rounded-full', active ? 'bg-[#16a34a]' : 'bg-[#a1a1aa]')} />
                       {active ? 'Active' : 'Inactive'}
                     </span>
-                    {workflow === 'inherit' && (
+                    {selectedWorkflows.length > 0 && (
                       <span className="inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#ede9fe] text-[#6d28d9] border border-[#ddd6fe]">
-                        Inherited
+                        {selectedWorkflows.length} workflow{selectedWorkflows.length !== 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
@@ -411,11 +584,11 @@ export default function NewStorePage() {
                   </div>
 
                   {/* Integrations summary */}
-                  {integrations.length > 0 && (
+                  {configured.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-[#f4f4f5]">
                       <p className="text-[11px] text-[#a1a1aa] mb-1.5">Integrations</p>
                       <div className="flex flex-wrap gap-1">
-                        {integrations.map(id => {
+                        {configured.map(id => {
                           const cfg = INTEGRATIONS.find(i => i.id === id);
                           if (!cfg) return null;
                           const Icon = cfg.icon;
@@ -441,9 +614,9 @@ export default function NewStorePage() {
                     {[
                       'Store is created and activated',
                       'Selected integrations are connected',
-                      workflow === 'inherit'
-                        ? 'Brand workflows applied automatically'
-                        : 'Workflow editor opens for configuration',
+                      selectedWorkflows.length > 0
+                        ? `${selectedWorkflows.length} workflow${selectedWorkflows.length !== 1 ? 's' : ''} inherited and activated`
+                        : 'No workflows configured — set up later',
                     ].map((step, i) => (
                       <li key={i} className="flex items-start gap-2 text-[11px] text-[#6d28d9] leading-snug">
                         <span className="w-3.5 h-3.5 rounded-full bg-[#7c3aed]/15 flex items-center justify-center shrink-0 mt-px text-[9px] font-bold text-[#7c3aed]">
@@ -462,6 +635,14 @@ export default function NewStorePage() {
         </div>
 
       </div>
+
+      {/* Add Brand Modal */}
+      {showAddBrand && (
+        <AddBrandModal
+          onSave={handleAddBrand}
+          onClose={() => setShowAddBrand(false)}
+        />
+      )}
     </div>
   );
 }
