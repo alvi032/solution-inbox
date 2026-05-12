@@ -769,6 +769,63 @@ export default function PopupsPage() {
     <div className="flex h-screen overflow-hidden bg-white">
       <AppSidebar />
 
+      {/* ── Left icon rail — full height ── */}
+      <div className="w-[52px] border-r border-[#e4e4e7] bg-[#fafafa] flex flex-col items-center py-2 gap-0.5 shrink-0">
+        {NAV_ITEMS.map(item => (
+          <button
+            key={item.key}
+            onClick={() => { setActivePanel(item.key); setSelectedItemId(null); }}
+            title={item.label}
+            className={cn(
+              'w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all',
+              activePanel === item.key && !selectedItem
+                ? 'bg-[#18181b] text-white'
+                : 'text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]'
+            )}
+          >
+            {item.icon}
+            <span className="text-[8px] font-semibold tracking-wide leading-none">{item.label.slice(0, 4)}</span>
+          </button>
+        ))}
+        <div className="mt-auto">
+          <button title="Settings" className="w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-all">
+            <Settings size={18} />
+            <span className="text-[8px] font-semibold tracking-wide leading-none">Sett</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Properties panel — full height ── */}
+      <div className="w-[300px] shrink-0 border-r border-[#e4e4e7] bg-white flex flex-col overflow-hidden">
+        {selectedItem ? (
+          <ElementPropertyPanel
+            item={selectedItem}
+            onDeselect={() => setSelectedItemId(null)}
+            onRemove={() => removeItem(selectedItem.id)}
+          />
+        ) : (
+          <>
+            {activePanel === 'elements' && <ElementsPanel onDragStart={handleDragStart} />}
+            {activePanel === 'theme'    && <ThemePanel />}
+            {activePanel === 'display'  && <DisplayPanel />}
+            {activePanel === 'code'     && <CodePanel />}
+            {activePanel === 'layers'   && <LayersPanel items={canvasItems} selectedId={selectedItemId} onSelect={id => setSelectedItemId(id)} />}
+            {activePanel === 'history'  && (
+              <div className="px-4 py-3">
+                <p className="text-xs font-semibold text-[#18181b] mb-3">History</p>
+                {['Added CTA button', 'Changed heading text', 'Added email input', 'Initial layout'].map((h, i) => (
+                  <div key={h} className="flex items-center gap-2 py-2 border-b border-[#f4f4f5] last:border-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#d4d4d8] shrink-0" />
+                    <span className={cn('text-xs', i === 0 ? 'text-[#18181b] font-medium' : 'text-[#a1a1aa]')}>{h}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Canvas column: top bars + canvas ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
         {/* ── Top bar ── */}
@@ -859,67 +916,8 @@ export default function PopupsPage() {
           </div>
         )}
 
-        {/* ── Main content ── */}
-        <div className="flex flex-1 min-h-0 overflow-hidden">
-
-          {/* Left icon nav */}
-          <div className="w-[52px] border-r border-[#e4e4e7] bg-[#fafafa] flex flex-col items-center py-2 gap-0.5 shrink-0">
-            {NAV_ITEMS.map(item => (
-              <button
-                key={item.key}
-                onClick={() => { setActivePanel(item.key); setSelectedItemId(null); }}
-                title={item.label}
-                className={cn(
-                  'w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all',
-                  activePanel === item.key && !selectedItem
-                    ? 'bg-[#18181b] text-white'
-                    : 'text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]'
-                )}
-              >
-                {item.icon}
-                <span className="text-[8px] font-semibold tracking-wide leading-none">{item.label.slice(0, 4)}</span>
-              </button>
-            ))}
-            <div className="mt-auto">
-              <button title="Settings" className="w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-all">
-                <Settings size={18} />
-                <span className="text-[8px] font-semibold tracking-wide leading-none">Sett</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Context panel */}
-          <div className="w-[300px] shrink-0 border-r border-[#e4e4e7] bg-white flex flex-col overflow-hidden">
-            {selectedItem ? (
-              <ElementPropertyPanel
-                item={selectedItem}
-                onDeselect={() => setSelectedItemId(null)}
-                onRemove={() => removeItem(selectedItem.id)}
-              />
-            ) : (
-              <>
-                {activePanel === 'elements' && <ElementsPanel onDragStart={handleDragStart} />}
-                {activePanel === 'theme'    && <ThemePanel />}
-                {activePanel === 'display'  && <DisplayPanel />}
-                {activePanel === 'code'     && <CodePanel />}
-                {activePanel === 'layers'   && <LayersPanel items={canvasItems} selectedId={selectedItemId} onSelect={id => setSelectedItemId(id)} />}
-                {activePanel === 'history'  && (
-                  <div className="px-4 py-3">
-                    <p className="text-xs font-semibold text-[#18181b] mb-3">History</p>
-                    {['Added CTA button', 'Changed heading text', 'Added email input', 'Initial layout'].map((h, i) => (
-                      <div key={h} className="flex items-center gap-2 py-2 border-b border-[#f4f4f5] last:border-0">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#d4d4d8] shrink-0" />
-                        <span className={cn('text-xs', i === 0 ? 'text-[#18181b] font-medium' : 'text-[#a1a1aa]')}>{h}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Canvas */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-[#f0f0f0]">
+        {/* ── Canvas ── */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#f0f0f0]">
 
             {/* Canvas toolbar */}
             <div className="flex items-center justify-between px-4 h-10 border-b border-[#e4e4e7] bg-white shrink-0">
@@ -1003,6 +1001,6 @@ export default function PopupsPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
+
