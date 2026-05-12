@@ -381,6 +381,10 @@ export default function AppSidebar({ forceCollapsed = false, onboardingActive = 
     const stored = localStorage.getItem('insightsOpenCount');
     return stored !== null ? parseInt(stored, 10) : 4;
   });
+  // In alt onboarding, show Workflows + KB once user has selected a goal
+  const [altGoalSet, setAltGoalSet] = useState(() =>
+    typeof window !== 'undefined' ? !!localStorage.getItem('altOnboardingGoal') : false
+  );
   const pathname = usePathname();
   const insideApp = pathname.startsWith('/inbox') || pathname.startsWith('/evo-search') || pathname.startsWith('/quizzes');
 
@@ -393,16 +397,19 @@ export default function AppSidebar({ forceCollapsed = false, onboardingActive = 
     const onEvoReset = () => setEvoSearchInstalled(false);
     const onQuizzesInstall = () => setQuizzesInstalled(true);
     const onInsightsChange = (e: Event) => setInsightsCount((e as CustomEvent<number>).detail);
+    const onGoalSet = () => setAltGoalSet(true);
 
     window.addEventListener('evo-search-installed', onEvoInstall);
     window.addEventListener('evo-search-reset', onEvoReset);
     window.addEventListener('quizzes-installed', onQuizzesInstall);
     window.addEventListener('insights-count-change', onInsightsChange);
+    window.addEventListener('alt-onboarding-goal-set', onGoalSet);
     return () => {
       window.removeEventListener('evo-search-installed', onEvoInstall);
       window.removeEventListener('evo-search-reset', onEvoReset);
       window.removeEventListener('quizzes-installed', onQuizzesInstall);
       window.removeEventListener('insights-count-change', onInsightsChange);
+      window.removeEventListener('alt-onboarding-goal-set', onGoalSet);
     };
   }, []);
 
@@ -535,22 +542,28 @@ export default function AppSidebar({ forceCollapsed = false, onboardingActive = 
           </div>
         )}
 
-        {/* Workflows + Knowledge Base — hidden in alt onboarding */}
-        {!altOnboarding && <div className={cn('flex flex-col gap-0.5 mt-2', onboardingActive && 'opacity-40 pointer-events-none')}>
-          <div className="border-t border-[#e5e7eb] mb-1" />
-          <WorkflowsNavItem isCollapsed={showAsCollapsed} forceCollapsed={forceCollapsed} pathname={pathname} insightsCount={insightsCount} />
-          <NavTooltip label="Knowledge Base" enabled={showAsCollapsed}>
-            <button
-              className={cn(
-                'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors w-full text-left',
-                showAsCollapsed && 'justify-center px-0'
-              )}
-            >
-              <BookOpen size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
-              {!showAsCollapsed && <span>Knowledge Base</span>}
-            </button>
-          </NavTooltip>
-        </div>}
+        {/* Workflows + Knowledge Base — shown normally, or in alt onboarding once goal is selected */}
+        {(!altOnboarding || altGoalSet) && (
+          <div className={cn('flex flex-col gap-0.5 mt-2', onboardingActive && 'opacity-40 pointer-events-none')}>
+            <div className="border-t border-[#e5e7eb] mb-1" />
+            <WorkflowsNavItem isCollapsed={showAsCollapsed} forceCollapsed={forceCollapsed} pathname={pathname} insightsCount={insightsCount} />
+            <NavTooltip label="Knowledge Base" enabled={showAsCollapsed}>
+              <Link
+                href="/knowledge-base"
+                className={cn(
+                  'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                  pathname.startsWith('/knowledge-base')
+                    ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                    : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                  showAsCollapsed && 'justify-center px-0'
+                )}
+              >
+                <BookOpen size={16} className={cn('shrink-0', pathname.startsWith('/knowledge-base') ? '' : 'opacity-70 group-hover:opacity-100')} />
+                {!showAsCollapsed && <span>Knowledge Base</span>}
+              </Link>
+            </NavTooltip>
+          </div>
+        )}
 
       </nav>
 

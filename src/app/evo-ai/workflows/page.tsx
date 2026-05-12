@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import {
   Plus, FlaskConical, Search, ChevronDown, ShoppingBag,
   MessageSquare, Mail, Globe, X, Sparkles, TrendingDown, Zap, AlertTriangle,
-  ArrowLeft, Send, GitBranch,
+  ArrowLeft, Send, GitBranch, Download, ArrowRight,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -1374,12 +1374,62 @@ function StoreFilter({
   );
 }
 
+// ─── Onboarding Guide ─────────────────────────────────────────────────
+
+function WorkflowsOnboardingGuide({ onDone }: { onDone: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-end pointer-events-none">
+      {/* Two tooltip popovers stacked near the top-right action buttons */}
+      <div className="relative pointer-events-auto mt-[60px] mr-6 flex flex-col gap-3">
+
+        {/* Arrow pointing up-right toward the Create Workflow button */}
+        <div className="relative w-[280px] bg-[#18181b] text-white rounded-2xl shadow-xl p-4">
+          <div className="absolute -top-2 right-12 w-4 h-4 bg-[#18181b] rotate-45 rounded-sm" />
+          <div className="flex items-start gap-3 relative z-10">
+            <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Plus size={13} className="text-white" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold mb-0.5">Create a new workflow</p>
+              <p className="text-[11px] text-white/60 leading-relaxed">
+                Build a custom workflow from scratch for your specific support scenarios.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative w-[280px] bg-[#18181b] text-white rounded-2xl shadow-xl p-4">
+          <div className="flex items-start gap-3 relative z-10">
+            <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Download size={13} className="text-white" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold mb-0.5">Import pre-built templates</p>
+              <p className="text-[11px] text-white/60 leading-relaxed">
+                Use the <strong className="text-white font-medium">Import workflows</strong> button above to add templates like Refund Handling, Order Status, and Returns.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onDone}
+            className="mt-3 flex items-center gap-1 text-[11px] font-medium text-white/50 hover:text-white transition-colors relative z-10"
+          >
+            Done — continue setup <ArrowRight size={10} />
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────
 
 function WorkflowsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [tab, setTab] = useState<'support' | 'sales' | 'insights'>('support');
+  const isOnboarding = searchParams.get('onboarding') === 'alt';
 
   useEffect(() => {
     const t = searchParams.get('tab');
@@ -1442,6 +1492,11 @@ function WorkflowsContent() {
     <div className="flex h-screen overflow-hidden bg-white">
       <AppSidebar />
 
+      {/* Onboarding guide tooltips */}
+      {isOnboarding && !testWorkflows && (
+        <WorkflowsOnboardingGuide onDone={() => router.push('/onboarding/alt?completed=workflows')} />
+      )}
+
       {/* Test workflow modal */}
       {showTestModal && (
         <TestWorkflowModal
@@ -1476,6 +1531,15 @@ function WorkflowsContent() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {isOnboarding && (
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#e4e4e7] text-[#3f3f46] hover:border-[#a1a1aa] hover:text-[#18181b] transition-colors"
+                  id="import-workflows-btn"
+                >
+                  <Download size={13} />
+                  Import workflows
+                </button>
+              )}
               <button
                 onClick={() => setShowTestModal(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#e4e4e7] text-[#3f3f46] hover:border-[#a1a1aa] hover:text-[#18181b] transition-colors"
@@ -1486,6 +1550,7 @@ function WorkflowsContent() {
               <Link
                 href="/evo-ai/workflows/new"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#18181b] text-white hover:bg-[#27272a] transition-colors"
+                id="create-workflow-btn"
               >
                 <Plus size={13} />
                 Create workflow

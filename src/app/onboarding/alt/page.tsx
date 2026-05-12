@@ -17,11 +17,13 @@ import {
   ArrowRight,
   X,
   Send,
+  BookOpen,
+  GitBranch,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type StepKey = 'connect' | 'select-goal' | 'configure' | 'test-golive' | 'unlock';
+type StepKey = 'connect' | 'select-goal' | 'pricing' | 'configure' | 'test-golive' | 'unlock';
 
 const STEPS: { key: StepKey; number: number; title: string; description: string }[] = [
   {
@@ -37,20 +39,26 @@ const STEPS: { key: StepKey; number: number; title: string; description: string 
     description: 'Choose which capability you want to set up first.',
   },
   {
-    key: 'configure',
+    key: 'pricing',
     number: 3,
+    title: 'Choose a Plan',
+    description: 'All plans include a 30-day free trial. No credit card required to start.',
+  },
+  {
+    key: 'configure',
+    number: 4,
     title: 'Complete App-Specific Setup',
     description: 'Configure your selected app with the settings that match your business.',
   },
   {
     key: 'test-golive',
-    number: 4,
+    number: 5,
     title: 'Test and Go Live',
     description: 'Preview your setup and activate it for real customers.',
   },
   {
     key: 'unlock',
-    number: 5,
+    number: 6,
     title: 'Unlock Additional Capabilities',
     description: 'Add more EVO AI apps to grow your business further.',
   },
@@ -224,20 +232,183 @@ function SelectGoalPanel({ onSelect }: { onSelect: (goal: string) => void }) {
   );
 }
 
-// ─── Step 3: Configure (checklist) ───────────────────────────────────────────
+// ─── Step 3: Pricing ─────────────────────────────────────────────────────────
+
+const PLANS = [
+  {
+    name: 'Starter',
+    price: '$49',
+    period: '/ store / mo',
+    description: 'For small stores getting started with AI support.',
+    features: [
+      'Up to 500 tickets / month',
+      '3 pre-built workflows',
+      'Email support',
+      'Basic analytics',
+    ],
+    cta: 'Start free trial',
+    popular: false,
+    highlight: false,
+  },
+  {
+    name: 'Growth',
+    price: '$149',
+    period: '/ store / mo',
+    description: 'For scaling brands that need more power and flexibility.',
+    features: [
+      'Up to 5,000 tickets / month',
+      'Unlimited workflows',
+      'Priority support',
+      'Advanced analytics',
+      'Custom AI tone & branding',
+    ],
+    cta: 'Start free trial',
+    popular: true,
+    highlight: true,
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '/ store',
+    description: 'For large teams with high volume and enterprise requirements.',
+    features: [
+      'Unlimited tickets',
+      'Dedicated success manager',
+      'SLA & uptime guarantee',
+      'SSO & advanced security',
+      'Custom integrations',
+    ],
+    cta: 'Contact sales',
+    popular: false,
+    highlight: false,
+  },
+];
+
+function PricingPanel({ onSelect }: { onSelect: () => void }) {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  return (
+    <div className="pt-4">
+      <div className="flex items-center gap-2 mb-1">
+        <p className="text-sm text-[#71717a]">All plans include a</p>
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#15803d] bg-[#f0fdf4] border border-[#bbf7d0] px-2 py-0.5 rounded-full">
+          <Check size={10} strokeWidth={3} />
+          30-day free trial
+        </span>
+      </div>
+      <p className="text-xs text-[#a1a1aa] mb-5">Pricing is per store. No credit card required to start.</p>
+
+      <div className="grid grid-cols-3 gap-3 max-w-3xl mb-5">
+        {PLANS.map(plan => (
+          <button
+            key={plan.name}
+            onClick={() => setSelected(plan.name)}
+            className={cn(
+              'relative flex flex-col items-start rounded-2xl border p-5 text-left transition-all',
+              plan.highlight
+                ? 'border-[#18181b] bg-[#18181b] text-white shadow-lg'
+                : selected === plan.name
+                ? 'border-[#18181b] bg-white shadow-sm'
+                : 'border-[#e4e4e7] bg-white hover:border-[#a1a1aa] hover:shadow-sm'
+            )}
+          >
+            {plan.popular && (
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider bg-[#18181b] text-white px-3 py-1 rounded-full border-2 border-white">
+                Most Popular
+              </span>
+            )}
+
+            {/* Plan name */}
+            <p className={cn('text-xs font-semibold uppercase tracking-wider mb-3', plan.highlight ? 'text-white/60' : 'text-[#a1a1aa]')}>
+              {plan.name}
+            </p>
+
+            {/* Price */}
+            <div className="flex flex-col mb-2">
+              <span className={cn('text-3xl font-bold leading-none', plan.highlight ? 'text-white' : 'text-[#18181b]')}>
+                {plan.price}
+              </span>
+              {plan.period && (
+                <span className={cn('text-[11px] mt-1', plan.highlight ? 'text-white/50' : 'text-[#a1a1aa]')}>
+                  {plan.period}
+                </span>
+              )}
+            </div>
+
+            <p className={cn('text-[11px] leading-relaxed mb-4', plan.highlight ? 'text-white/70' : 'text-[#71717a]')}>
+              {plan.description}
+            </p>
+
+            {/* Features */}
+            <ul className="flex flex-col gap-2 mb-5 w-full">
+              {plan.features.map(f => (
+                <li key={f} className="flex items-start gap-2">
+                  <div className={cn(
+                    'w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-px',
+                    plan.highlight ? 'bg-white/20' : 'bg-[#f0fdf4]'
+                  )}>
+                    <Check size={9} strokeWidth={3} className={plan.highlight ? 'text-white' : 'text-[#16a34a]'} />
+                  </div>
+                  <span className={cn('text-[11px] leading-snug', plan.highlight ? 'text-white/80' : 'text-[#3f3f46]')}>
+                    {f}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Selected indicator */}
+            {selected === plan.name && !plan.highlight && (
+              <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-[#18181b] flex items-center justify-center">
+                <Check size={10} className="text-white" strokeWidth={3} />
+              </div>
+            )}
+            {plan.highlight && selected === plan.name && (
+              <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                <Check size={10} className="text-white" strokeWidth={3} />
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={onSelect}
+        disabled={!selected}
+        className="inline-flex items-center gap-2 h-9 px-5 rounded-xl bg-[#18181b] text-white text-sm font-medium hover:bg-[#27272a] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        {selected ? `Continue with ${selected}` : 'Select a plan to continue'}
+        <ChevronRight size={13} />
+      </button>
+    </div>
+  );
+}
+
+// ─── Step 4: Configure (checklist) ───────────────────────────────────────────
 
 type ItemStatus = 'pending' | 'done' | 'skipped';
 
-const SUPPORT_AGENT_ITEMS = [
+interface SupportItem {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  // inline items have content; redirect items have href + ctaLabel
+  content?: React.ReactNode;
+  href?: string;
+  ctaLabel?: string;
+}
+
+const SUPPORT_AGENT_ITEMS: SupportItem[] = [
   {
     id: 'inbox-config',
     title: 'Configure Support Inbox',
     description: 'Set your AI response language, tone of voice, and escalation threshold.',
+    icon: <MessageSquare size={13} className="text-[#18181b]" />,
     content: (
       <div className="flex flex-col gap-2">
         {[
-          { label: 'Response Language', value: 'English (US)' },
-          { label: 'Tone of Voice',     value: 'Friendly & Professional' },
+          { label: 'Response Language',    value: 'English (US)' },
+          { label: 'Tone of Voice',        value: 'Friendly & Professional' },
           { label: 'Escalation Threshold', value: 'Medium' },
         ].map(s => (
           <div key={s.label} className="flex items-center justify-between rounded-lg border border-[#e4e4e7] bg-[#fafafa] px-4 py-2.5">
@@ -249,62 +420,52 @@ const SUPPORT_AGENT_ITEMS = [
     ),
   },
   {
-    id: 'import-workflows',
-    title: 'Import Workflows',
-    description: 'Select pre-built workflow templates for common support scenarios.',
-    content: (
-      <div className="flex flex-col gap-2">
-        {['Refund Handling Flow', 'Order Status Update', 'Return & Exchange', 'Shipping Inquiry'].map(wf => (
-          <div key={wf} className="flex items-center gap-3 rounded-lg border border-[#e4e4e7] bg-[#fafafa] px-4 py-2.5">
-            <div className="w-4 h-4 rounded border-2 border-[#18181b] bg-[#18181b] flex items-center justify-center shrink-0">
-              <Check size={9} className="text-white" strokeWidth={3} />
-            </div>
-            <span className="text-xs text-[#18181b] flex-1">{wf}</span>
-          </div>
-        ))}
-      </div>
-    ),
+    id: 'knowledge-base',
+    title: 'Import Knowledge Base',
+    description: 'Add your FAQs, product guides, and help articles so EVO AI can answer customer questions accurately.',
+    icon: <BookOpen size={13} className="text-[#18181b]" />,
+    href: '/knowledge-base?onboarding=alt',
+    ctaLabel: 'Go to Knowledge Base',
   },
   {
-    id: 'connect-integrations',
-    title: 'Link to Integrations',
-    description: 'Connect your helpdesk and messaging tools to centralise all conversations.',
-    content: (
-      <div className="flex flex-col gap-2">
-        {[
-          { name: 'Gorgias',  label: 'Recommended' },
-          { name: 'Email',    label: null },
-          { name: 'WhatsApp', label: null },
-        ].map(integ => (
-          <div key={integ.name} className="flex items-center justify-between rounded-lg border border-[#e4e4e7] bg-[#fafafa] px-4 py-2.5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-md bg-white border border-[#e4e4e7] flex items-center justify-center">
-                <MessageSquare size={11} className="text-[#3f3f46]" />
-              </div>
-              <span className="text-xs font-medium text-[#18181b]">{integ.name}</span>
-              {integ.label && (
-                <span className="text-[9px] font-semibold uppercase tracking-wider text-[#7c3aed] bg-[#ede9fe] border border-[#ddd6fe] px-1.5 py-0.5 rounded-full">
-                  {integ.label}
-                </span>
-              )}
-            </div>
-            <button className="text-[11px] font-medium text-[#7c3aed] hover:text-[#6d28d9] transition-colors">
-              Connect
-            </button>
-          </div>
-        ))}
-      </div>
-    ),
+    id: 'import-workflows',
+    title: 'Set Up Workflows',
+    description: 'Create or import pre-built workflow templates for common support scenarios like refunds, order status, and returns.',
+    icon: <GitBranch size={13} className="text-[#18181b]" />,
+    href: '/evo-ai/workflows?onboarding=alt',
+    ctaLabel: 'Go to Workflows',
   },
 ];
 
-function ConfigurePanel({ onComplete }: { onComplete: () => void }) {
+function ConfigurePanel({
+  onComplete,
+  externalCompleted = new Set<string>(),
+}: {
+  onComplete: () => void;
+  externalCompleted?: Set<string>;
+}) {
   const [expandedItem, setExpandedItem] = useState<string | null>('inbox-config');
   const [itemStatus, setItemStatus] = useState<Record<string, ItemStatus>>({
-    'inbox-config':          'pending',
-    'import-workflows':      'pending',
-    'connect-integrations':  'pending',
+    'inbox-config':    'pending',
+    'knowledge-base':  'pending',
+    'import-workflows': 'pending',
   });
+
+  // Sync externally-completed items (returned from KB / Workflows workspace)
+  useEffect(() => {
+    if (externalCompleted.size === 0) return;
+    setItemStatus(prev => {
+      const updated = { ...prev };
+      let changed = false;
+      externalCompleted.forEach(id => {
+        if (updated[id] === 'pending') { updated[id] = 'done'; changed = true; }
+      });
+      if (!changed) return prev;
+      const nextPending = SUPPORT_AGENT_ITEMS.find(i => updated[i.id] === 'pending');
+      setExpandedItem(nextPending?.id ?? null);
+      return updated;
+    });
+  }, [externalCompleted]);
 
   const allResolved = Object.values(itemStatus).every(s => s !== 'pending');
 
@@ -325,14 +486,15 @@ function ConfigurePanel({ onComplete }: { onComplete: () => void }) {
         {SUPPORT_AGENT_ITEMS.map(item => {
           const status = itemStatus[item.id];
           const isExpanded = expandedItem === item.id && status === 'pending';
+          const isRedirect = !!item.href;
           return (
             <div
               key={item.id}
               className={cn(
                 'rounded-xl border transition-all',
-                status === 'done'    ? 'border-[#bbf7d0] bg-[#f0fdf4]'      :
+                status === 'done'    ? 'border-[#bbf7d0] bg-[#f0fdf4]'           :
                 status === 'skipped' ? 'border-[#e4e4e7] bg-[#fafafa] opacity-60' :
-                isExpanded           ? 'border-[#18181b] bg-white shadow-sm' :
+                isExpanded           ? 'border-[#18181b] bg-white shadow-sm'      :
                                        'border-[#e4e4e7] bg-[#fafafa]'
               )}
             >
@@ -343,9 +505,9 @@ function ConfigurePanel({ onComplete }: { onComplete: () => void }) {
               >
                 <div className={cn(
                   'w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors',
-                  status === 'done'    ? 'bg-[#16a34a] border-[#16a34a]'   :
-                  status === 'skipped' ? 'border-[#d4d4d8] bg-white'        :
-                  isExpanded           ? 'border-[#18181b] bg-white'         :
+                  status === 'done'    ? 'bg-[#16a34a] border-[#16a34a]' :
+                  status === 'skipped' ? 'border-[#d4d4d8] bg-white'     :
+                  isExpanded           ? 'border-[#18181b] bg-white'      :
                                          'border-[#d4d4d8] bg-white'
                 )}>
                   {status === 'done'    && <Check size={10} className="text-white" strokeWidth={3} />}
@@ -354,8 +516,8 @@ function ConfigurePanel({ onComplete }: { onComplete: () => void }) {
                 <div className="flex-1 min-w-0">
                   <p className={cn(
                     'text-xs font-semibold',
-                    status === 'done'    ? 'text-[#15803d]'                     :
-                    status === 'skipped' ? 'text-[#a1a1aa] line-through'         :
+                    status === 'done'    ? 'text-[#15803d]'             :
+                    status === 'skipped' ? 'text-[#a1a1aa] line-through' :
                                            'text-[#18181b]'
                   )}>
                     {item.title}
@@ -374,22 +536,46 @@ function ConfigurePanel({ onComplete }: { onComplete: () => void }) {
               {isExpanded && (
                 <div className="px-4 pb-4 pt-0 border-t border-[#f4f4f5]">
                   <p className="text-xs text-[#71717a] mt-3 mb-3 leading-relaxed">{item.description}</p>
-                  {item.content}
-                  <div className="flex items-center justify-between mt-4">
-                    <button
-                      onClick={() => resolveItem(item.id, 'skipped')}
-                      className="text-xs font-medium text-[#a1a1aa] hover:text-[#71717a] transition-colors"
-                    >
-                      Skip for now
-                    </button>
-                    <button
-                      onClick={() => resolveItem(item.id, 'done')}
-                      className="inline-flex items-center gap-1.5 h-8 px-4 rounded-lg bg-[#18181b] text-white text-xs font-medium hover:bg-[#27272a] transition-colors"
-                    >
-                      <Check size={11} strokeWidth={2.5} />
-                      Save & Continue
-                    </button>
-                  </div>
+
+                  {isRedirect ? (
+                    /* Redirect-type item: CTA that navigates to workspace */
+                    <div className="flex items-center justify-between mt-2">
+                      <button
+                        onClick={() => resolveItem(item.id, 'skipped')}
+                        className="text-xs font-medium text-[#a1a1aa] hover:text-[#71717a] transition-colors"
+                      >
+                        Skip for now
+                      </button>
+                      <Link
+                        href={item.href!}
+                        className="inline-flex items-center gap-1.5 h-8 px-4 rounded-lg bg-[#18181b] text-white text-xs font-medium hover:bg-[#27272a] transition-colors"
+                      >
+                        {item.icon}
+                        {item.ctaLabel}
+                        <ChevronRight size={11} />
+                      </Link>
+                    </div>
+                  ) : (
+                    /* Inline item: show content + save/skip */
+                    <>
+                      {item.content}
+                      <div className="flex items-center justify-between mt-4">
+                        <button
+                          onClick={() => resolveItem(item.id, 'skipped')}
+                          className="text-xs font-medium text-[#a1a1aa] hover:text-[#71717a] transition-colors"
+                        >
+                          Skip for now
+                        </button>
+                        <button
+                          onClick={() => resolveItem(item.id, 'done')}
+                          className="inline-flex items-center gap-1.5 h-8 px-4 rounded-lg bg-[#18181b] text-white text-xs font-medium hover:bg-[#27272a] transition-colors"
+                        >
+                          <Check size={11} strokeWidth={2.5} />
+                          Save & Continue
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -706,15 +892,30 @@ function AltOnboardingInner() {
   const [completedSteps, setCompletedSteps] = useState<Set<StepKey>>(new Set());
   const [expandedStep, setExpandedStep] = useState<StepKey>('connect');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [completedConfigItems, setCompletedConfigItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const completed = searchParams.get('completed');
+
     if (completed === 'connect') {
       setCompletedSteps(prev => new Set([...prev, 'connect']));
       setExpandedStep('select-goal');
       setShowSuccessToast(true);
       const t = setTimeout(() => setShowSuccessToast(false), 4000);
       return () => clearTimeout(t);
+    }
+
+    if (completed === 'knowledge-base' || completed === 'workflows') {
+      // Ensure prior steps are marked complete so configure step is accessible
+      setCompletedSteps(prev => {
+        const s = new Set(prev);
+        (['connect', 'select-goal', 'pricing'] as StepKey[]).forEach(k => s.add(k));
+        return s;
+      });
+      setExpandedStep('configure');
+      setCompletedConfigItems(prev =>
+        new Set([...prev, completed === 'knowledge-base' ? 'knowledge-base' : 'import-workflows'])
+      );
     }
   }, [searchParams]);
 
@@ -788,10 +989,22 @@ function AltOnboardingInner() {
                 >
                   {step.key === 'connect' && <ConnectStorePanel />}
                   {step.key === 'select-goal' && (
-                    <SelectGoalPanel onSelect={() => markDone('select-goal')} />
+                    <SelectGoalPanel onSelect={(goal) => {
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('altOnboardingGoal', goal);
+                        window.dispatchEvent(new CustomEvent('alt-onboarding-goal-set', { detail: goal }));
+                      }
+                      markDone('select-goal');
+                    }} />
+                  )}
+                  {step.key === 'pricing' && (
+                    <PricingPanel onSelect={() => markDone('pricing')} />
                   )}
                   {step.key === 'configure' && (
-                    <ConfigurePanel onComplete={() => markDone('configure')} />
+                    <ConfigurePanel
+                      onComplete={() => markDone('configure')}
+                      externalCompleted={completedConfigItems}
+                    />
                   )}
                   {step.key === 'test-golive' && (
                     <TestGoLivePanel onComplete={() => markDone('test-golive')} />
