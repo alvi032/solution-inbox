@@ -744,6 +744,8 @@ export default function PopupsPage() {
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>(INITIAL_ITEMS);
   const [selectedItemId, setSelectedItemId] = useState<string | null>('i-cta');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [popupName, setPopupName] = useState('Welcome Offer Popup');
+  const [editingName, setEditingName] = useState(false);
   const dragTypeRef = { current: null as ElementType | null };
 
   const selectedItem = canvasItems.find(i => i.id === selectedItemId) ?? null;
@@ -825,60 +827,100 @@ export default function PopupsPage() {
         )}
       </div>
 
-      {/* ── Canvas column: top bars + canvas ── */}
+      {/* ── Canvas column: 4 header rows + canvas ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-        {/* ── Top bar ── */}
-        <header className="flex items-center gap-3 px-4 py-2 border-b border-[#e4e4e7] bg-white shrink-0 h-12">
+        {/* ── Row 1: Back · Name · Actions ── */}
+        <div className="flex items-center px-4 h-11 border-b border-[#e4e4e7] bg-white shrink-0">
+          {/* Left: back */}
           <button className="flex items-center gap-1.5 text-xs text-[#71717a] hover:text-[#18181b] transition-colors shrink-0">
             <ArrowLeft size={13} />
             Back
           </button>
-          <div className="w-px h-4 bg-[#e4e4e7]" />
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-[#18181b]">Welcome Offer Popup</span>
-            <button className="text-[#a1a1aa] hover:text-[#71717a] transition-colors"><Settings size={12} /></button>
-            <span className="text-[10px] font-medium text-[#a1a1aa] bg-[#f4f4f5] border border-[#e4e4e7] px-2 py-0.5 rounded-full">Draft</span>
+
+          {/* Center: editable name + badge */}
+          <div className="flex-1 flex items-center justify-center gap-2">
+            {editingName ? (
+              <input
+                autoFocus
+                value={popupName}
+                onChange={e => setPopupName(e.target.value)}
+                onBlur={() => setEditingName(false)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEditingName(false); }}
+                className="text-sm font-semibold text-[#18181b] bg-transparent border-b border-[#7c3aed] outline-none text-center w-56"
+              />
+            ) : (
+              <button
+                onClick={() => setEditingName(true)}
+                className="text-sm font-semibold text-[#18181b] hover:text-[#7c3aed] transition-colors"
+              >
+                {popupName}
+              </button>
+            )}
+            <span className="text-[10px] font-medium text-[#a1a1aa] bg-[#f4f4f5] border border-[#e4e4e7] px-2 py-0.5 rounded-full shrink-0">Draft</span>
           </div>
 
-          {/* Steps */}
-          <div className="flex items-center gap-1 ml-2">
-            {STEPS.map((step, i) => (
-              <div key={step.id} className="flex items-center gap-1">
-                {i > 0 && <ChevronRight size={12} className="text-[#d4d4d8]" />}
-                <button
-                  onClick={() => setActiveStep(step.id)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
-                    activeStep === step.id
-                      ? 'bg-[#18181b] text-white'
-                      : 'text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]'
-                  )}
-                >
-                  <span className={cn('w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0', activeStep === step.id ? 'bg-white/20' : 'bg-[#f4f4f5] text-[#71717a]')}>
-                    {step.id}
-                  </span>
-                  {step.label}
-                </button>
-              </div>
-            ))}
-            <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-[#a1a1aa] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors ml-1">
-              <Plus size={12} />
-              Add Step
-            </button>
-          </div>
-
-          <div className="ml-auto flex items-center gap-1.5">
+          {/* Right: undo/redo + actions */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <button className="w-7 h-7 flex items-center justify-center rounded-md text-[#a1a1aa] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors"><Undo2 size={13} /></button>
             <button className="w-7 h-7 flex items-center justify-center rounded-md text-[#a1a1aa] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors"><Redo2 size={13} /></button>
-            <div className="w-px h-4 bg-[#e4e4e7] mx-1" />
+            <div className="w-px h-4 bg-[#e4e4e7] mx-0.5" />
             <button className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium text-[#3f3f46] border border-[#e4e4e7] hover:border-[#a1a1aa] transition-colors"><Eye size={12} />Preview</button>
             <button className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium text-[#3f3f46] border border-[#e4e4e7] hover:border-[#a1a1aa] transition-colors"><Save size={12} />Save</button>
             <button className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium bg-[#7c3aed] text-white hover:bg-[#6d28d9] transition-colors"><Zap size={12} />Publish</button>
           </div>
-        </header>
+        </div>
 
-        {/* ── Text formatting toolbar (conditional) ── */}
+        {/* ── Row 2: Step pills ── */}
+        <div className="flex items-center justify-center gap-1 px-4 h-10 border-b border-[#e4e4e7] bg-white shrink-0">
+          {STEPS.map((step, i) => (
+            <div key={step.id} className="flex items-center gap-1">
+              {i > 0 && <ChevronRight size={11} className="text-[#d4d4d8]" />}
+              <button
+                onClick={() => setActiveStep(step.id)}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
+                  activeStep === step.id
+                    ? 'bg-[#18181b] text-white'
+                    : 'text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]'
+                )}
+              >
+                <span className={cn('w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0', activeStep === step.id ? 'bg-white/20' : 'bg-[#f4f4f5] text-[#71717a]')}>
+                  {step.id}
+                </span>
+                {step.label}
+              </button>
+            </div>
+          ))}
+          <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-[#a1a1aa] hover:bg-[#f4f4f5] hover:text-[#18181b] transition-colors ml-1">
+            <Plus size={11} />
+            Add Step
+          </button>
+        </div>
+
+        {/* ── Row 3: Responsive settings ── */}
+        <div className="flex items-center justify-between px-4 h-10 border-b border-[#e4e4e7] bg-white shrink-0">
+          <div className="flex items-center bg-[#f4f4f5] rounded-lg p-0.5">
+            <button onClick={() => setDevice('desktop')} className={cn('w-7 h-7 rounded-md flex items-center justify-center transition-colors', device === 'desktop' ? 'bg-white shadow-sm text-[#18181b]' : 'text-[#a1a1aa] hover:text-[#71717a]')}>
+              <Monitor size={13} />
+            </button>
+            <button onClick={() => setDevice('mobile')} className={cn('w-7 h-7 rounded-md flex items-center justify-center transition-colors', device === 'mobile' ? 'bg-white shadow-sm text-[#18181b]' : 'text-[#a1a1aa] hover:text-[#71717a]')}>
+              <Smartphone size={13} />
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-md border border-[#e4e4e7] bg-white px-2 py-1">
+            <span className="text-[10px] text-[#a1a1aa]">W</span>
+            <input defaultValue="1280" className="w-10 text-xs text-[#18181b] outline-none text-center" />
+            <span className="text-[10px] text-[#a1a1aa]">px</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button className="w-6 h-6 rounded flex items-center justify-center text-[#71717a] hover:bg-[#f4f4f5] transition-colors"><Minus size={11} /></button>
+            <span className="text-xs text-[#71717a] w-9 text-center">100%</span>
+            <button className="w-6 h-6 rounded flex items-center justify-center text-[#71717a] hover:bg-[#f4f4f5] transition-colors"><Plus size={11} /></button>
+          </div>
+        </div>
+
+        {/* ── Row 4: Typography toolbar (conditional) ── */}
         {showTextToolbar && (
           <div className="flex items-center gap-1 px-4 h-9 border-b border-[#e4e4e7] bg-white shrink-0">
             <select className="h-6 rounded border border-[#e4e4e7] text-xs text-[#18181b] px-1.5 bg-white outline-none">
@@ -918,32 +960,6 @@ export default function PopupsPage() {
 
         {/* ── Canvas ── */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[#f0f0f0]">
-
-            {/* Canvas toolbar */}
-            <div className="flex items-center justify-between px-4 h-10 border-b border-[#e4e4e7] bg-white shrink-0">
-              <div className="flex items-center bg-[#f4f4f5] rounded-lg p-0.5">
-                <button onClick={() => setDevice('desktop')} className={cn('w-7 h-7 rounded-md flex items-center justify-center transition-colors', device === 'desktop' ? 'bg-white shadow-sm text-[#18181b]' : 'text-[#a1a1aa] hover:text-[#71717a]')}>
-                  <Monitor size={13} />
-                </button>
-                <button onClick={() => setDevice('mobile')} className={cn('w-7 h-7 rounded-md flex items-center justify-center transition-colors', device === 'mobile' ? 'bg-white shadow-sm text-[#18181b]' : 'text-[#a1a1aa] hover:text-[#71717a]')}>
-                  <Smartphone size={13} />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-1.5 rounded-md border border-[#e4e4e7] bg-white px-2 py-1">
-                  <span className="text-[10px] text-[#a1a1aa]">W</span>
-                  <input defaultValue="1280" className="w-10 text-xs text-[#18181b] outline-none text-center" />
-                  <span className="text-[10px] text-[#a1a1aa]">px</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <button className="w-6 h-6 rounded flex items-center justify-center text-[#71717a] hover:bg-[#f4f4f5] transition-colors"><Minus size={11} /></button>
-                <span className="text-xs text-[#71717a] w-9 text-center">100%</span>
-                <button className="w-6 h-6 rounded flex items-center justify-center text-[#71717a] hover:bg-[#f4f4f5] transition-colors"><Plus size={11} /></button>
-              </div>
-            </div>
 
             {/* Canvas area */}
             <div
