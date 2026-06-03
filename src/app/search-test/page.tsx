@@ -493,19 +493,18 @@ export default function SearchTestPage() {
                         <div className="pt-3">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Default view</p>
                           <ConfigToggle label="Suggested Categories" checked={config.showSuggestedCategories} onChange={v => update('showSuggestedCategories', v)} />
-                          {config.showSuggestedCategories && (
-                            <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
-                              <span className="text-[12px] text-[#94a3b8]">Max number of results</span>
-                              <CountToggle value={config.categoryCount} onChange={v => update('categoryCount', v)} />
-                            </div>
-                          )}
                           <ConfigToggle label="Handpicked for you" checked={config.showHandpickedForYou} onChange={v => update('showHandpickedForYou', v)} />
-                          {config.showHandpickedForYou && (
-                            <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
-                              <span className="text-[12px] text-[#94a3b8]">Max number of results</span>
-                              <CountToggle value={config.productCount} onChange={v => update('productCount', v)} />
-                            </div>
-                          )}
+                        </div>
+                        <div className="pt-4">
+                          <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Search results</p>
+                          <div className="flex items-center justify-between py-3 border-b border-[#f1f5f9]">
+                            <span className="text-[14px] text-[#334155]">Recommended Categories</span>
+                            <CountToggle value={config.categoryCount} onChange={v => update('categoryCount', v)} />
+                          </div>
+                          <div className="flex items-center justify-between py-3 border-b border-[#f1f5f9]">
+                            <span className="text-[14px] text-[#334155]">Matching Products</span>
+                            <CountToggle value={config.productCount} onChange={v => update('productCount', v)} />
+                          </div>
                         </div>
                         <div className="pt-4">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Left sidebar</p>
@@ -538,19 +537,18 @@ export default function SearchTestPage() {
                         <div className="pt-3">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Default view</p>
                           <ConfigToggle label="Suggested Categories" checked={config.mobileShowSuggestedCategories} onChange={v => update('mobileShowSuggestedCategories', v)} />
-                          {config.mobileShowSuggestedCategories && (
-                            <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
-                              <span className="text-[12px] text-[#94a3b8]">Max number of results</span>
-                              <CountToggle value={config.mobileCategoryCount} onChange={v => update('mobileCategoryCount', v)} />
-                            </div>
-                          )}
                           <ConfigToggle label="Handpicked for you" checked={config.mobileShowHandpickedForYou} onChange={v => update('mobileShowHandpickedForYou', v)} />
-                          {config.mobileShowHandpickedForYou && (
-                            <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
-                              <span className="text-[12px] text-[#94a3b8]">Max number of results</span>
-                              <CountToggle value={config.mobileProductCount} onChange={v => update('mobileProductCount', v)} />
-                            </div>
-                          )}
+                        </div>
+                        <div className="pt-4">
+                          <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Search results</p>
+                          <div className="flex items-center justify-between py-3 border-b border-[#f1f5f9]">
+                            <span className="text-[14px] text-[#334155]">Recommended Categories</span>
+                            <CountToggle value={config.mobileCategoryCount} onChange={v => update('mobileCategoryCount', v)} />
+                          </div>
+                          <div className="flex items-center justify-between py-3 border-b border-[#f1f5f9]">
+                            <span className="text-[14px] text-[#334155]">Matching Products</span>
+                            <CountToggle value={config.mobileProductCount} onChange={v => update('mobileProductCount', v)} />
+                          </div>
                         </div>
                         <div className="pt-4">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Suggestions</p>

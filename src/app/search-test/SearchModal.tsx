@@ -237,9 +237,13 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
   const [canCatScrollRight, setCanCatScrollRight] = useState(true);
   const isTyping = query.length > 0;
 
-  const visibleCategories = CATEGORIES.slice(0, config.categoryCount);
-  const visibleCatImgs = CAT_IMGS.slice(0, config.categoryCount);
-  const visibleProducts = PRODUCTS.slice(0, config.productCount);
+  const catCount = isTyping ? config.categoryCount : 4;
+  const productCount = isTyping ? config.productCount : 4;
+  const catScrollable = isTyping && config.categoryCount === 8;
+  const productScrollable = isTyping && config.productCount === 8;
+  const visibleCategories = CATEGORIES.slice(0, catCount);
+  const visibleCatImgs = CAT_IMGS.slice(0, catCount);
+  const visibleProducts = PRODUCTS.slice(0, productCount);
   const visibleRecent = recentSearches.slice(0, config.recentCount);
   const visibleTrending = TRENDING_CHIPS.slice(0, config.trendingCount);
 
@@ -302,13 +306,13 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
               <div
                 ref={categoriesScrollRef}
                 onScroll={handleCategoriesScroll}
-                className={`flex gap-[10px] ${config.categoryCount === 8 ? 'overflow-x-auto scrollbar-hide' : ''}`}
+                className={`flex gap-[10px] ${catScrollable ? 'overflow-x-auto scrollbar-hide' : ''}`}
               >
                 {visibleCategories.map((cat, i) => (
-                  <CategoryCard key={cat} name={cat} img={visibleCatImgs[i]} theme={theme} scrollable={config.categoryCount === 8} />
+                  <CategoryCard key={cat} name={cat} img={visibleCatImgs[i]} theme={theme} scrollable={catScrollable} />
                 ))}
               </div>
-              {config.categoryCount === 8 && canCatScrollLeft && (
+              {catScrollable && canCatScrollLeft && (
                 <button
                   onClick={() => scrollCategories('left')}
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
@@ -316,7 +320,7 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
                   <ChevronLeft size={14} className="text-[#334155]" />
                 </button>
               )}
-              {config.categoryCount === 8 && canCatScrollRight && (
+              {catScrollable && canCatScrollRight && (
                 <button
                   onClick={() => scrollCategories('right')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
@@ -340,13 +344,13 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
               <div
                 ref={productsScrollRef}
                 onScroll={handleProductsScroll}
-                className={`flex gap-[10px] ${config.productCount === 8 ? 'overflow-x-auto scrollbar-hide' : ''}`}
+                className={`flex gap-[10px] ${productScrollable ? 'overflow-x-auto scrollbar-hide' : ''}`}
               >
                 {visibleProducts.map((p) => (
-                  <ProductCard key={p.name} {...p} theme={theme} scrollable={config.productCount === 8} />
+                  <ProductCard key={p.name} {...p} theme={theme} scrollable={productScrollable} />
                 ))}
               </div>
-              {config.productCount === 8 && canScrollLeft && (
+              {productScrollable && canScrollLeft && (
                 <button
                   onClick={() => scrollProducts('left')}
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
@@ -354,7 +358,7 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
                   <ChevronLeft size={14} className="text-[#334155]" />
                 </button>
               )}
-              {config.productCount === 8 && canScrollRight && (
+              {productScrollable && canScrollRight && (
                 <button
                   onClick={() => scrollProducts('right')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"

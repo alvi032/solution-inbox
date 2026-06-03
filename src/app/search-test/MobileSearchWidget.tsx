@@ -213,8 +213,10 @@ export default function MobileSearchWidget({ onClose, config, theme, preview = f
   const inputRef = useRef<HTMLInputElement>(null);
   const isTyping = query.length > 0;
 
-  const visibleCategories = CATEGORIES.slice(0, config.mobileCategoryCount);
-  const visibleCatImgs = CAT_IMGS.slice(0, config.mobileCategoryCount);
+  const mobileCatCount = isTyping ? config.mobileCategoryCount : 4;
+  const mobileProductCount = isTyping ? config.mobileProductCount : 4;
+  const visibleCategories = CATEGORIES.slice(0, mobileCatCount);
+  const visibleCatImgs = CAT_IMGS.slice(0, mobileCatCount);
 
   useEffect(() => {
     if (!isTyping) { setShowEmpty(false); return; }
@@ -336,7 +338,7 @@ export default function MobileSearchWidget({ onClose, config, theme, preview = f
             <div className="flex flex-col gap-3">
               <SectionHeading icon={<Search size={16} />} label="Matching Products" color={theme.colorSectionLabel} />
               <div className="grid grid-cols-2 gap-3">
-                {PRODUCTS.slice(0, config.mobileProductCount).map(p => (
+                {PRODUCTS.slice(0, mobileProductCount).map(p => (
                   <MobileProductCard key={p.name} {...p} theme={theme} />
                 ))}
               </div>
@@ -412,7 +414,7 @@ export default function MobileSearchWidget({ onClose, config, theme, preview = f
               <div className="flex flex-col gap-3">
                 <SectionHeading icon={<HandHeart size={16} />} label="Handpicked for you" color={theme.colorSectionLabel} />
                 <div className="grid grid-cols-2 gap-3">
-                  {PRODUCTS.slice(0, config.mobileProductCount).map(p => (
+                  {PRODUCTS.slice(0, mobileProductCount).map(p => (
                     <MobileProductCard key={p.name} {...p} theme={theme} />
                   ))}
                 </div>
