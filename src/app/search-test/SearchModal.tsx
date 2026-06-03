@@ -69,11 +69,12 @@ function SectionLabel({ icon, label, color }: { icon: React.ReactNode; label: st
   );
 }
 
-function CategoryCard({ name, img, theme }: { name: string; img: string; theme: ThemeConfig }) {
+function CategoryCard({ name, img, theme, scrollable = false }: { name: string; img: string; theme: ThemeConfig; scrollable?: boolean }) {
   return (
     <div
-      className="flex-1 min-w-0 overflow-hidden flex flex-col cursor-pointer"
+      className={`overflow-hidden flex flex-col cursor-pointer ${scrollable ? 'shrink-0' : 'flex-1 min-w-0'}`}
       style={{
+        ...(scrollable ? { width: 'calc((100% - 30px) / 4)' } : {}),
         border: `${theme.cardBorderWidth}px solid ${theme.cardBorderColor}`,
         borderRadius: `${theme.cardBorderRadius}px`,
         backgroundColor: theme.cardBgColor,
@@ -304,7 +305,7 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
                 className={`flex gap-[10px] ${config.categoryCount === 8 ? 'overflow-x-auto scrollbar-hide' : ''}`}
               >
                 {visibleCategories.map((cat, i) => (
-                  <CategoryCard key={cat} name={cat} img={visibleCatImgs[i]} theme={theme} />
+                  <CategoryCard key={cat} name={cat} img={visibleCatImgs[i]} theme={theme} scrollable={config.categoryCount === 8} />
                 ))}
               </div>
               {config.categoryCount === 8 && canCatScrollLeft && (
