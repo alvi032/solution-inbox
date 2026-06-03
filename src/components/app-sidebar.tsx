@@ -539,6 +539,23 @@ export default function AppSidebar({ forceCollapsed = false, onboardingActive = 
                 {!showAsCollapsed && <span>Popups</span>}
               </Link>
             </NavTooltip>
+
+            {/* Search Test */}
+            <NavTooltip label="Search Test" enabled={showAsCollapsed}>
+              <Link
+                href="/search-test"
+                className={cn(
+                  'group flex items-center gap-2 rounded-md px-2 h-8 text-[14px] transition-colors',
+                  pathname.startsWith('/search-test')
+                    ? 'bg-[#f4f4f5] text-[#18181b] font-medium'
+                    : 'text-[#3f3f46] hover:bg-[#f4f4f5] hover:text-[#18181b]',
+                  showAsCollapsed && 'justify-center px-0'
+                )}
+              >
+                <Search size={16} className={cn('shrink-0', pathname.startsWith('/search-test') ? '' : 'opacity-70 group-hover:opacity-100')} />
+                {!showAsCollapsed && <span>Search Test</span>}
+              </Link>
+            </NavTooltip>
           </div>
         )}
 
