@@ -301,13 +301,13 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
               <div
                 ref={categoriesScrollRef}
                 onScroll={handleCategoriesScroll}
-                className={`flex gap-[10px] ${config.enableCategoryScroll ? 'overflow-x-auto scrollbar-hide' : ''}`}
+                className={`flex gap-[10px] ${config.categoryCount === 8 ? 'overflow-x-auto scrollbar-hide' : ''}`}
               >
                 {visibleCategories.map((cat, i) => (
                   <CategoryCard key={cat} name={cat} img={visibleCatImgs[i]} theme={theme} />
                 ))}
               </div>
-              {config.enableCategoryScroll && canCatScrollLeft && (
+              {config.categoryCount === 8 && canCatScrollLeft && (
                 <button
                   onClick={() => scrollCategories('left')}
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
@@ -315,7 +315,7 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
                   <ChevronLeft size={14} className="text-[#334155]" />
                 </button>
               )}
-              {config.enableCategoryScroll && canCatScrollRight && (
+              {config.categoryCount === 8 && canCatScrollRight && (
                 <button
                   onClick={() => scrollCategories('right')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
@@ -339,13 +339,13 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
               <div
                 ref={productsScrollRef}
                 onScroll={handleProductsScroll}
-                className={`flex gap-[10px] ${config.enableProductScroll ? 'overflow-x-auto scrollbar-hide' : ''}`}
+                className={`flex gap-[10px] ${config.productCount === 8 ? 'overflow-x-auto scrollbar-hide' : ''}`}
               >
                 {visibleProducts.map((p) => (
-                  <ProductCard key={p.name} {...p} theme={theme} scrollable={config.enableProductScroll} />
+                  <ProductCard key={p.name} {...p} theme={theme} scrollable={config.productCount === 8} />
                 ))}
               </div>
-              {config.enableProductScroll && canScrollLeft && (
+              {config.productCount === 8 && canScrollLeft && (
                 <button
                   onClick={() => scrollProducts('left')}
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
@@ -353,7 +353,7 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
                   <ChevronLeft size={14} className="text-[#334155]" />
                 </button>
               )}
-              {config.enableProductScroll && canScrollRight && (
+              {config.productCount === 8 && canScrollRight && (
                 <button
                   onClick={() => scrollProducts('right')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
