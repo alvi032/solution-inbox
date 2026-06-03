@@ -363,7 +363,7 @@ export default function SearchTestPage() {
     showSuggestedCategories: true,
     showHandpickedForYou: true,
     showSearchWithAI: true,
-    aiDisplayStyle: 'toggle',
+    aiDisplayStyle: 'cta',
     showLeftSidebar: true,
     showRecentSearches: true,
     recentCount: 5,
@@ -376,7 +376,7 @@ export default function SearchTestPage() {
     mobileRecentCount: 8,
     mobileShowAutoSuggestions: true,
     mobileShowSearchWithAI: true,
-    mobileAiDisplayStyle: 'toggle',
+    mobileAiDisplayStyle: 'cta',
   });
 
   const [theme, setTheme] = useState<ThemeConfig>({
