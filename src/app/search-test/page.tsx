@@ -430,7 +430,7 @@ export default function SearchTestPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white overflow-hidden">
+    <div className="flex flex-col bg-white min-h-screen md:h-screen md:overflow-hidden">
       <StorefrontNav config={config} theme={theme} />
 
       {/* Page tab strip */}
@@ -445,11 +445,11 @@ export default function SearchTestPage() {
         </div>
       </div>
 
-      <main className="flex-1 overflow-hidden bg-[#f9f9f9]">
-        <div className="h-full max-w-[1280px] mx-auto flex gap-4 p-6">
+      <main className="flex-1 bg-[#f9f9f9] overflow-y-auto md:overflow-hidden">
+        <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row gap-4 p-4 md:p-6 md:h-full">
 
-          {/* Left panel: Features / Theme tabs */}
-          <div className="w-[400px] shrink-0 bg-white rounded-xl border border-[#e5e7eb] flex flex-col overflow-hidden">
+          {/* Config panel — bottom on mobile, left on desktop */}
+          <div className="order-2 md:order-1 w-full md:w-[400px] md:shrink-0 bg-white rounded-xl border border-[#e5e7eb] flex flex-col md:overflow-hidden">
             <div className="flex border-b border-[#e5e7eb] shrink-0">
               {(['features', 'theme'] as const).map(tab => (
                 <button
@@ -717,8 +717,8 @@ export default function SearchTestPage() {
             </div>
           </div>
 
-          {/* Right panel: live preview */}
-          <div className="flex-1 min-w-0 bg-white rounded-xl border border-[#e5e7eb] flex flex-col overflow-hidden">
+          {/* Preview panel — top on mobile, right on desktop */}
+          <div className="order-1 md:order-2 md:flex-1 md:min-w-0 bg-white rounded-xl border border-[#e5e7eb] flex flex-col overflow-hidden h-[400px] md:h-auto">
             <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between shrink-0">
               <p className="text-[13px] font-semibold text-[#020617]">Live Preview</p>
               <div className="flex items-center gap-1">
@@ -736,26 +736,28 @@ export default function SearchTestPage() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-6">
+            <div className="flex-1 overflow-auto p-4 md:p-6">
               {previewMode === 'desktop' ? (
                 <ScaledPreview naturalWidth={config.showLeftSidebar ? 1000 : 775}>
                   <SearchModal preview onClose={() => {}} config={config} theme={theme} />
                 </ScaledPreview>
               ) : (
-                <div
-                  className="rounded-[44px] border-[10px] border-[#18181b] shadow-2xl overflow-hidden flex flex-col shrink-0"
-                  style={{ width: 390, height: 844 }}
-                >
-                  {/* Mock mobile nav */}
-                  <div className="h-16 border-b border-[#e5e7eb] bg-white shrink-0 flex items-center px-5">
-                    <div className="w-7 h-7 rounded-md bg-[#18181b] flex items-center justify-center mr-auto">
-                      <span className="text-white text-xs font-bold tracking-tight">S</span>
+                <ScaledPreview naturalWidth={410}>
+                  <div
+                    className="rounded-[44px] border-[10px] border-[#18181b] shadow-2xl overflow-hidden flex flex-col"
+                    style={{ width: 390, height: 844 }}
+                  >
+                    {/* Mock mobile nav */}
+                    <div className="h-16 border-b border-[#e5e7eb] bg-white shrink-0 flex items-center px-5">
+                      <div className="w-7 h-7 rounded-md bg-[#18181b] flex items-center justify-center mr-auto">
+                        <span className="text-white text-xs font-bold tracking-tight">S</span>
+                      </div>
+                      <Search size={18} className="text-[#52525b]" />
                     </div>
-                    <Search size={18} className="text-[#52525b]" />
+                    {/* Interactive mobile widget */}
+                    <MobileSearchWidget preview onClose={() => {}} config={config} theme={theme} />
                   </div>
-                  {/* Interactive mobile widget */}
-                  <MobileSearchWidget preview onClose={() => {}} config={config} theme={theme} />
-                </div>
+                </ScaledPreview>
               )}
             </div>
           </div>
