@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Search, TrendingUp, LayoutGrid, HandHeart, Clock, X, WandSparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, TrendingUp, LayoutGrid, HandHeart, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SearchConfig, ThemeConfig } from './page';
 
@@ -226,10 +226,11 @@ function EmptyState({ onEnableAI }: { onEnableAI: () => void }) {
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
-export default function SearchModal({ onClose, config, theme }: {
+export default function SearchModal({ onClose, config, theme, preview = false }: {
   onClose: () => void;
   config: SearchConfig;
   theme: ThemeConfig;
+  preview?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const productsScrollRef = useRef<HTMLDivElement>(null);
@@ -242,8 +243,8 @@ export default function SearchModal({ onClose, config, theme }: {
   const [canScrollRight, setCanScrollRight] = useState(true);
   const isTyping = query.length > 0;
 
-  const visibleCategories = CATEGORIES.slice(0, theme.categoryCount);
-  const visibleCatImgs = CAT_IMGS.slice(0, theme.categoryCount);
+  const visibleCategories = CATEGORIES.slice(0, 4);
+  const visibleCatImgs = CAT_IMGS.slice(0, 4);
   const visibleProducts = theme.enableProductScroll ? PRODUCTS : PRODUCTS.slice(0, 4);
   const visibleRecent = recentSearches.slice(0, config.recentCount);
   const visibleTrending = TRENDING_CHIPS.slice(0, config.trendingCount);
@@ -262,10 +263,10 @@ export default function SearchModal({ onClose, config, theme }: {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
   }
 
-  // Derived border styles for the outer widget shell
   const outerBorder = `${theme.widgetBorderWidth}px solid ${theme.widgetBorderColor}`;
   const topRadius = `${theme.widgetBorderRadius}px ${theme.widgetBorderRadius}px 0 0`;
   const bottomRadius = `0 0 ${theme.widgetBorderRadius}px ${theme.widgetBorderRadius}px`;
+  const widgetShadow = { none: 'none', sm: '0 2px 8px rgba(0,0,0,0.08)', md: '0 8px 24px rgba(0,0,0,0.12)', lg: '0 16px 48px rgba(0,0,0,0.18)' }[theme.shadow];
 
   function renderRightPanel() {
     if (isLoading) return <RightPanelSkeleton />;
@@ -341,11 +342,12 @@ export default function SearchModal({ onClose, config, theme }: {
   }
 
   useEffect(() => {
+    if (preview) return;
     inputRef.current?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, preview]);
 
   useEffect(() => {
     if (!isTyping) { setShowEmpty(false); return; }
@@ -358,18 +360,14 @@ export default function SearchModal({ onClose, config, theme }: {
     return () => clearTimeout(t);
   }, [query]);
 
-  return (
+  const widget = (
     <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex flex-col items-center pt-16 px-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className={`w-full flex flex-col ${preview ? '' : (config.showLeftSidebar ? 'max-w-[1000px]' : 'max-w-[775px]')}`}
+      style={{ fontFamily: theme.fontFamily, opacity: theme.widgetOpacity / 100, borderRadius: `${theme.widgetBorderRadius}px`, boxShadow: widgetShadow }}
     >
-      <div
-        className={`w-full flex flex-col ${config.showLeftSidebar ? 'max-w-[1000px]' : 'max-w-[775px]'}`}
-        style={{ fontFamily: theme.fontFamily, opacity: theme.widgetOpacity / 100 }}
-      >
         {/* Search bar */}
         <div
-          className="flex items-center gap-3 px-5 h-[60px] shadow-lg"
+          className="flex items-center gap-3 px-5 h-[60px]"
           style={{
             backgroundColor: theme.widgetBgColor,
             border: outerBorder,
@@ -395,18 +393,20 @@ export default function SearchModal({ onClose, config, theme }: {
               <X size={11} className="text-[#71717a]" />
             </button>
           )}
-          <button
-            onClick={onClose}
-            className="text-[#a1a1aa] hover:text-[#18181b] transition-colors pl-4 ml-1"
-            style={{ borderLeft: outerBorder }}
-          >
-            <X size={18} />
-          </button>
+          {!preview && (
+            <button
+              onClick={onClose}
+              className="text-[#a1a1aa] hover:text-[#18181b] transition-colors pl-4 ml-1"
+              style={{ borderLeft: outerBorder }}
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Results panel */}
         <div
-          className="shadow-xl flex overflow-hidden"
+          className="flex overflow-hidden"
           style={{
             backgroundColor: theme.widgetBgColor,
             border: outerBorder,
@@ -429,16 +429,13 @@ export default function SearchModal({ onClose, config, theme }: {
                       ) : (
                         <button
                           onClick={() => setAiEnabled(true)}
-                          className="search-ai-btn w-full flex items-center gap-2 bg-white hover:bg-gradient-to-r hover:from-[#fef7ee] hover:to-[#f5ddb8] border border-[#e5e7eb] hover:border-[#dfc49a] text-[#334155] text-[13px] font-normal px-3 py-2 rounded-lg transition-all duration-300 group/ai"
+                          className="search-ai-btn w-full flex items-center gap-2 border border-[#dfc49a] text-[#334155] text-[13px] font-normal px-3 py-2 rounded-lg group/ai"
                         >
                           <span className="text-left flex-1 leading-[18px]">
-                            Search <span className="italic group-hover/ai:not-italic">"{query}"</span> with AI
+                            Search "{query}" with AI
                           </span>
                           <span className="wand-icon relative shrink-0 w-4 h-4" style={{ transform: 'scaleX(-1)' }}>
-                            <WandSparkles size={16} className="absolute top-0 left-0 text-[#94a3b8] group-hover/ai:opacity-0 transition-opacity duration-150" />
-                            <span className="absolute top-0 left-0 opacity-0 group-hover/ai:opacity-100 transition-opacity duration-150 pointer-events-none">
-                              <WandGradientIcon size={16} />
-                            </span>
+                            <WandGradientIcon size={16} />
                           </span>
                         </button>
                       )}
@@ -524,8 +521,17 @@ export default function SearchModal({ onClose, config, theme }: {
             {renderRightPanel()}
           </div>
         </div>
+    </div>
+  );
 
-      </div>
+  if (preview) return widget;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex flex-col items-center pt-16 px-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      {widget}
     </div>
   );
 }

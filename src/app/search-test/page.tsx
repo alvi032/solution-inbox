@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Check } from 'lucide-react';
-import AppSidebar from '@/components/app-sidebar';
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { Check, Search, Monitor, Smartphone } from 'lucide-react';
 import StorefrontNav from './StorefrontNav';
+import MobileSearchWidget from './MobileSearchWidget';
+import SearchModal from './SearchModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type SearchConfig = {
+  // Desktop
   showTrending: boolean;
   trendingCount: number;
   showSuggestedCategories: boolean;
@@ -18,50 +21,71 @@ export type SearchConfig = {
   showRecentSearches: boolean;
   recentCount: number;
   showAutoSuggestions: boolean;
+  // Mobile
+  mobileShowTrending: boolean;
+  mobileTrendingCount: number;
+  mobileShowSuggestedCategories: boolean;
+  mobileShowHandpickedForYou: boolean;
+  mobileShowRecentSearches: boolean;
+  mobileRecentCount: number;
+  mobileShowAutoSuggestions: boolean;
+  mobileShowSearchWithAI: boolean;
+  mobileAiDisplayStyle: 'toggle' | 'cta';
 };
 
 export type ThemeConfig = {
+  // Global
+  fontFamily: string;
+  shadow: 'none' | 'sm' | 'md' | 'lg';
+  // Widget Container
+  widgetBgColor: string;
+  widgetOpacity: number;
   widgetBorderColor: string;
   widgetBorderWidth: number;
   widgetBorderRadius: number;
-  widgetBgColor: string;
-  widgetOpacity: number;
-  cardBorderWidth: number;
-  cardBorderColor: string;
-  cardBorderRadius: number;
+  // Search Input
+  colorSearchInput: string;
+  searchInputPlaceholderColor: string;
+  searchInputBgColor: string;
+  searchInputBorderColor: string;
+  searchInputBorderWidth: number;
+  searchInputBorderRadius: number;
+  // Suggestions & Sidebar
+  colorSuggestions: string;
+  colorSuggestionHover: string;
+  colorSuggestionActive: string;
+  colorTrendingText: string;
+  colorSidebarLabel: string;
+  // Section Headers
+  colorSectionLabel: string;
+  // Product Cards
   cardBgColor: string;
-  showProductPrice: boolean;
-  showProductDescription: boolean;
-  showCategoryDescription: boolean;
+  cardBorderColor: string;
+  cardBorderWidth: number;
+  cardBorderRadius: number;
+  cardHoverEffect: 'none' | 'lift' | 'shadow' | 'scale';
   imageRatioW: number;
   imageRatioH: number;
-  fontFamily: string;
+  imageFit: 'cover' | 'contain';
+  imageHoverZoom: boolean;
   colorCardName: string;
-  colorProductDesc: string;
+  showProductPrice: boolean;
   colorProductPrice: string;
-  colorSectionLabel: string;
-  colorSuggestions: string;
-  colorSearchInput: string;
-  categoryCount: 4 | 5;
+  showProductDescription: boolean;
+  colorProductDesc: string;
+  // Category Cards
+  inheritCategoryCardStyling: boolean;
+  categoryCardBgColor: string;
+  categoryCardBorderColor: string;
+  categoryCardBorderWidth: number;
+  categoryCardBorderRadius: number;
+  colorCategoryName: string;
+  showCategoryDescription: boolean;
+  colorCategoryDesc: string;
+  // Layout
   enableProductScroll: boolean;
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function parseHex(hex: string): [number, number, number] {
-  const c = hex.replace('#', '').slice(0, 6).padEnd(6, '0');
-  return [
-    parseInt(c.slice(0, 2), 16) || 0,
-    parseInt(c.slice(2, 4), 16) || 0,
-    parseInt(c.slice(4, 6), 16) || 0,
-  ];
-}
-
-function toHex(r: number, g: number, b: number): string {
-  return '#' + [r, g, b]
-    .map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0'))
-    .join('');
-}
 
 // ─── Feature config components ────────────────────────────────────────────────
 
@@ -118,6 +142,66 @@ function SegmentedControl({ value, onChange }: {
 
 // ─── Theme config components ──────────────────────────────────────────────────
 
+function ThemeRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between py-[7px] border-b border-[#f8fafc] last:border-0 gap-3">
+      <span className="text-[12px] text-[#64748b] leading-none shrink-0">{label}</span>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+}
+
+function MiniToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={`relative flex items-center h-[22px] w-[40px] rounded-full px-[2px] transition-colors duration-200 shrink-0 ${checked ? 'bg-[#18181b]' : 'bg-[#e4e4e7]'}`}
+    >
+      <span className={`block size-[18px] rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+    </button>
+  );
+}
+
+function ImageFitControl({ value, onChange }: { value: 'cover' | 'contain'; onChange: (v: 'cover' | 'contain') => void }) {
+  return (
+    <div className="flex bg-[#f1f5f9] rounded-lg p-[3px] gap-[2px]">
+      {(['cover', 'contain'] as const).map(opt => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`px-2.5 text-[11px] font-medium py-[5px] rounded-md transition-all duration-150 capitalize ${
+            value === opt ? 'bg-white text-[#020617] shadow-sm' : 'text-[#64748b] hover:text-[#334155]'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function HoverEffectControl({ value, onChange }: { value: 'none' | 'lift' | 'shadow' | 'scale'; onChange: (v: 'none' | 'lift' | 'shadow' | 'scale') => void }) {
+  return (
+    <div className="flex bg-[#f1f5f9] rounded-lg p-[3px] gap-[2px]">
+      {(['none', 'lift', 'shadow', 'scale'] as const).map(opt => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`px-3 text-[11px] font-medium py-[5px] rounded-md transition-all duration-150 capitalize ${
+            value === opt ? 'bg-white text-[#020617] shadow-sm' : 'text-[#64748b] hover:text-[#334155]'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ThemeSubLabel({ children }: { children: React.ReactNode }) {
+  return <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-wide mt-4 mb-0.5 first:mt-0">{children}</p>;
+}
+
 function SectionDivider({ label }: { label: string }) {
   return (
     <div className="px-4 py-3 border-t border-[#f1f5f9] bg-[#fafafa]">
@@ -157,16 +241,27 @@ function NumberInput({ value, onChange, min = 0, max = 99, suffix }: {
   max?: number;
   suffix?: string;
 }) {
+  const [raw, setRaw] = useState(String(value));
+
+  useEffect(() => { setRaw(String(value)); }, [value]);
+
   return (
     <div className="flex items-center gap-1.5">
       <input
         type="number"
         min={min}
         max={max}
-        value={value}
+        value={raw}
         onChange={e => {
+          setRaw(e.target.value);
           const n = parseInt(e.target.value);
-          if (!isNaN(n)) onChange(Math.max(min, Math.min(max, n)));
+          onChange(isNaN(n) ? min : Math.max(min, Math.min(max, n)));
+        }}
+        onBlur={() => {
+          const n = parseInt(raw);
+          const clamped = isNaN(n) ? min : Math.max(min, Math.min(max, n));
+          setRaw(String(clamped));
+          onChange(clamped);
         }}
         className="w-[44px] text-[12px] border border-[#e5e7eb] rounded-md px-1.5 py-[3px] text-center text-[#334155] outline-none focus:border-[#a1a1aa]"
       />
@@ -176,73 +271,27 @@ function NumberInput({ value, onChange, min = 0, max = 99, suffix }: {
 }
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [format, setFormat] = useState<'hex' | 'rgb'>('hex');
   const [hexText, setHexText] = useState(value);
 
   useEffect(() => { setHexText(value); }, [value]);
 
-  const [r, g, b] = parseHex(value);
-
-  const handleHexChange = (text: string) => {
-    setHexText(text);
-    if (/^#[0-9a-fA-F]{6}$/.test(text)) onChange(text);
-  };
-
-  const handleRgbChange = (ch: 0 | 1 | 2, val: number) => {
-    const rgb: [number, number, number] = [r, g, b];
-    rgb[ch] = Math.max(0, Math.min(255, isNaN(val) ? 0 : val));
-    onChange(toHex(...rgb));
-  };
-
   return (
     <div className="flex items-center gap-1.5">
       <label className="relative cursor-pointer shrink-0">
-        <span
-          className="block w-[20px] h-[20px] rounded-[3px] border border-[#d1d5db]"
-          style={{ background: value }}
-        />
-        <input
-          type="color"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-        />
+        <span className="block w-[20px] h-[20px] rounded-[3px] border border-[#d1d5db]" style={{ background: value }} />
+        <input type="color" value={value} onChange={e => onChange(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
       </label>
-
-      {format === 'hex' ? (
-        <input
-          value={hexText}
-          onChange={e => handleHexChange(e.target.value)}
-          placeholder="#000000"
-          maxLength={7}
-          className="w-[70px] text-[12px] font-mono border border-[#e5e7eb] rounded-md px-1.5 py-[3px] text-[#334155] outline-none focus:border-[#a1a1aa]"
-        />
-      ) : (
-        <div className="flex items-center gap-1">
-          {(['R', 'G', 'B'] as const).map((ch, i) => (
-            <div key={ch} className="flex items-center gap-0.5">
-              <span className="text-[10px] text-[#94a3b8]">{ch}</span>
-              <input
-                type="number"
-                min={0}
-                max={255}
-                value={[r, g, b][i]}
-                onChange={e => handleRgbChange(i as 0 | 1 | 2, parseInt(e.target.value))}
-                className="w-[30px] text-[11px] border border-[#e5e7eb] rounded px-1 py-[3px] text-center text-[#334155] outline-none"
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <select
-        value={format}
-        onChange={e => setFormat(e.target.value as 'hex' | 'rgb')}
-        className="text-[11px] border border-[#e5e7eb] rounded-md px-1 py-[3px] text-[#64748b] bg-white cursor-pointer outline-none"
-      >
-        <option value="hex">HEX</option>
-        <option value="rgb">RGB</option>
-      </select>
+      <input
+        value={hexText}
+        onChange={e => {
+          setHexText(e.target.value);
+          if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value);
+        }}
+        onBlur={() => { if (!/^#[0-9a-fA-F]{6}$/.test(hexText)) setHexText(value); }}
+        placeholder="#000000"
+        maxLength={7}
+        className="w-[70px] text-[12px] font-mono border border-[#e5e7eb] rounded-md px-1.5 py-[3px] text-[#334155] outline-none focus:border-[#a1a1aa]"
+      />
     </div>
   );
 }
@@ -256,47 +305,47 @@ function ColorRow({ label, value, onChange }: { label: string; value: string; on
   );
 }
 
-// ─── Live card preview ────────────────────────────────────────────────────────
+// ─── Scaled preview wrapper ───────────────────────────────────────────────────
 
-const PREVIEW_IMG = 'https://www.figma.com/api/mcp/asset/e74188b9-4157-4ef3-b8ca-7f1c8ba06fee';
+function ScaledPreview({ children, naturalWidth }: { children: React.ReactNode; naturalWidth: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [leftOffset, setLeftOffset] = useState(0);
+  const [scaledHeight, setScaledHeight] = useState<number | undefined>(undefined);
 
-function LiveProductCard({ theme }: { theme: ThemeConfig }) {
+  useEffect(() => {
+    const container = containerRef.current;
+    const inner = innerRef.current;
+    if (!container || !inner) return;
+
+    const update = () => {
+      const cw = container.clientWidth;
+      const s = Math.min(1, (cw * 0.95) / naturalWidth);
+      setScale(s);
+      setLeftOffset((cw - naturalWidth * s) / 2);
+      // +48 gives the shadow room to bleed below without being clipped
+      setScaledHeight(inner.scrollHeight * s + 48);
+    };
+
+    const ro = new ResizeObserver(update);
+    ro.observe(container);
+    ro.observe(inner);
+    update();
+    return () => ro.disconnect();
+  }, [naturalWidth]);
+
   return (
-    <div
-      className="overflow-hidden flex flex-col w-[150px] transition-all duration-150"
-      style={{
-        border: `${theme.cardBorderWidth}px solid ${theme.cardBorderColor}`,
-        borderRadius: `${theme.cardBorderRadius}px`,
-        backgroundColor: theme.cardBgColor,
-      }}
-    >
+    <div ref={containerRef} className="w-full" style={{ height: scaledHeight }}>
       <div
-        className="relative w-full overflow-hidden"
+        ref={innerRef}
         style={{
-          aspectRatio: `${theme.imageRatioW} / ${theme.imageRatioH}`,
-          borderBottom: `${theme.cardBorderWidth}px solid ${theme.cardBorderColor}`,
+          width: naturalWidth,
+          transformOrigin: 'top left',
+          transform: `translate(${leftOffset}px, 0) scale(${scale})`,
         }}
       >
-        <img
-          src={PREVIEW_IMG}
-          alt="Preview"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      </div>
-      <div className="px-2 pt-2 pb-[10px] flex flex-col gap-0.5">
-        <p className="text-[13px] leading-[18px] font-semibold truncate transition-colors duration-150" style={{ color: theme.colorCardName }}>
-          Sweven
-        </p>
-        {theme.showProductDescription && (
-          <p className="text-[12px] leading-[17px] font-normal transition-colors duration-150" style={{ color: theme.colorProductDesc }}>
-            Elegant citrus and amber scent.
-          </p>
-        )}
-        {theme.showProductPrice && (
-          <p className="text-[13px] leading-[18px] font-semibold transition-colors duration-150" style={{ color: theme.colorProductPrice }}>
-            $45
-          </p>
-        )}
+        {children}
       </div>
     </div>
   );
@@ -305,6 +354,9 @@ function LiveProductCard({ theme }: { theme: ThemeConfig }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SearchTestPage() {
+  const [activeTab, setActiveTab] = useState<'features' | 'theme'>('features');
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+
   const [config, setConfig] = useState<SearchConfig>({
     showTrending: true,
     trendingCount: 5,
@@ -316,31 +368,67 @@ export default function SearchTestPage() {
     showRecentSearches: true,
     recentCount: 5,
     showAutoSuggestions: true,
+    mobileShowTrending: true,
+    mobileTrendingCount: 8,
+    mobileShowSuggestedCategories: true,
+    mobileShowHandpickedForYou: true,
+    mobileShowRecentSearches: true,
+    mobileRecentCount: 8,
+    mobileShowAutoSuggestions: true,
+    mobileShowSearchWithAI: true,
+    mobileAiDisplayStyle: 'toggle',
   });
 
   const [theme, setTheme] = useState<ThemeConfig>({
+    // Global
+    fontFamily: 'Inter',
+    shadow: 'none',
+    // Widget Container
+    widgetBgColor: '#ffffff',
+    widgetOpacity: 100,
     widgetBorderColor: '#e5e7eb',
     widgetBorderWidth: 1,
     widgetBorderRadius: 12,
-    widgetBgColor: '#ffffff',
-    widgetOpacity: 100,
-    cardBorderWidth: 1,
-    cardBorderColor: '#e5e7eb',
-    cardBorderRadius: 6,
+    // Search Input
+    colorSearchInput: '#18181b',
+    searchInputPlaceholderColor: '#a1a1aa',
+    searchInputBgColor: '#ffffff',
+    searchInputBorderColor: '#e5e7eb',
+    searchInputBorderWidth: 0,
+    searchInputBorderRadius: 0,
+    // Suggestions & Sidebar
+    colorSuggestions: '#64748b',
+    colorSuggestionHover: '#f1f5f9',
+    colorSuggestionActive: '#e2e8f0',
+    colorTrendingText: '#64748b',
+    colorSidebarLabel: '#020617',
+    // Section Headers
+    colorSectionLabel: '#020617',
+    // Product Cards
     cardBgColor: '#ffffff',
-    showProductPrice: true,
-    showProductDescription: true,
-    showCategoryDescription: false,
+    cardBorderColor: '#e5e7eb',
+    cardBorderWidth: 1,
+    cardBorderRadius: 6,
+    cardHoverEffect: 'none',
     imageRatioW: 1,
     imageRatioH: 1,
-    fontFamily: 'Inter',
+    imageFit: 'cover',
+    imageHoverZoom: false,
     colorCardName: '#334155',
-    colorProductDesc: '#475569',
+    showProductPrice: true,
     colorProductPrice: '#020617',
-    colorSectionLabel: '#020617',
-    colorSuggestions: '#64748b',
-    colorSearchInput: '#18181b',
-    categoryCount: 5,
+    showProductDescription: true,
+    colorProductDesc: '#475569',
+    // Category Cards
+    inheritCategoryCardStyling: true,
+    categoryCardBgColor: '#ffffff',
+    categoryCardBorderColor: '#e5e7eb',
+    categoryCardBorderWidth: 1,
+    categoryCardBorderRadius: 6,
+    colorCategoryName: '#334155',
+    showCategoryDescription: false,
+    colorCategoryDesc: '#64748b',
+    // Layout
     enableProductScroll: false,
   });
 
@@ -353,229 +441,324 @@ export default function SearchTestPage() {
   }
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
-      <AppSidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <StorefrontNav config={config} theme={theme} />
-        <main className="flex-1 overflow-auto bg-[#f9f9f9] p-6">
-          <div className="flex flex-col gap-4">
+    <div className="flex flex-col h-screen bg-white overflow-hidden">
+      <StorefrontNav config={config} theme={theme} />
 
-            {/* ── Features ── */}
-            <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-              <div className="px-4 pt-4 pb-3 border-b border-[#e5e7eb]">
-                <p className="text-[13px] font-semibold text-[#020617]">Features</p>
-              </div>
-              <div className="flex divide-x divide-[#f1f5f9]">
-                <div className="flex-1 px-4 pt-3 pb-4">
-                  <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Default view</p>
-                  <ConfigToggle label="Suggested Categories" checked={config.showSuggestedCategories} onChange={v => update('showSuggestedCategories', v)} />
-                  <ConfigToggle label="Handpicked for you" checked={config.showHandpickedForYou} onChange={v => update('showHandpickedForYou', v)} />
-                </div>
-                <div className="flex-1 px-4 pt-3 pb-4">
-                  <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Left sidebar</p>
-                  <ConfigToggle label="Show left sidebar" checked={config.showLeftSidebar} onChange={v => update('showLeftSidebar', v)} />
-                  <ConfigToggle label="Trending" description="Shown in default state" checked={config.showTrending} onChange={v => update('showTrending', v)} />
-                  {config.showTrending && (
-                    <div className="flex items-center gap-2 py-2 border-b border-[#f1f5f9] pl-1">
-                      <span className="text-[12px] text-[#94a3b8]">Show</span>
-                      <NumberInput value={config.trendingCount} onChange={v => update('trendingCount', v)} min={1} max={8} />
-                      <span className="text-[12px] text-[#94a3b8]">items</span>
-                    </div>
-                  )}
-                  {config.showLeftSidebar && (
-                    <>
-                      <ConfigToggle label="Recent searches" description="Shown in default state" checked={config.showRecentSearches} onChange={v => update('showRecentSearches', v)} />
-                      {config.showRecentSearches && (
-                        <div className="flex items-center gap-2 py-2 border-b border-[#f1f5f9] pl-1">
-                          <span className="text-[12px] text-[#94a3b8]">Show</span>
-                          <NumberInput value={config.recentCount} onChange={v => update('recentCount', v)} min={1} max={8} />
-                          <span className="text-[12px] text-[#94a3b8]">items</span>
-                        </div>
-                      )}
-                      <ConfigToggle label="Auto-suggestions" description="Shown while typing" checked={config.showAutoSuggestions} onChange={v => update('showAutoSuggestions', v)} />
-                    </>
-                  )}
-                </div>
-                <div className="flex-1 px-4 pt-3 pb-4">
-                  <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Search with AI</p>
-                  <ConfigToggle label="Enable Search with AI" checked={config.showSearchWithAI} onChange={v => update('showSearchWithAI', v)} />
-                  {config.showSearchWithAI && (
-                    <SegmentedControl value={config.aiDisplayStyle} onChange={v => update('aiDisplayStyle', v)} />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* ── Theme ── */}
-            <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-              <div className="px-4 pt-4 pb-3 border-b border-[#e5e7eb]">
-                <p className="text-[13px] font-semibold text-[#020617]">Theme</p>
-              </div>
-
-              {/* Widget */}
-              <SectionDivider label="Widget" />
-              <div className="px-4 py-4 flex flex-col gap-4">
-                <div className="flex items-end gap-8">
-                  <div>
-                    <FieldLabel>Border color</FieldLabel>
-                    <ColorPicker value={theme.widgetBorderColor} onChange={v => updateTheme('widgetBorderColor', v)} />
-                  </div>
-                  <div>
-                    <FieldLabel>Border thickness</FieldLabel>
-                    <NumberInput value={theme.widgetBorderWidth} onChange={v => updateTheme('widgetBorderWidth', v)} min={0} max={8} suffix="px" />
-                  </div>
-                  <div>
-                    <FieldLabel>Border radius</FieldLabel>
-                    <NumberInput value={theme.widgetBorderRadius} onChange={v => updateTheme('widgetBorderRadius', v)} min={0} max={40} suffix="px" />
-                  </div>
-                </div>
-                <div className="flex items-end gap-8">
-                  <div>
-                    <FieldLabel>Background</FieldLabel>
-                    <ColorPicker value={theme.widgetBgColor} onChange={v => updateTheme('widgetBgColor', v)} />
-                  </div>
-                  <div>
-                    <FieldLabel>Opacity</FieldLabel>
-                    <NumberInput value={theme.widgetOpacity} onChange={v => updateTheme('widgetOpacity', v)} min={0} max={100} suffix="%" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Cards */}
-              <SectionDivider label="Cards" />
-              <div className="px-4 py-4">
-                <div className="flex items-start gap-10">
-
-                  {/* Controls */}
-                  <div className="flex flex-col gap-4">
-                    <div>
-                      <p className="text-[11px] font-medium text-[#334155] mb-2">Product cards</p>
-                      <div className="flex items-end gap-6">
-                        <div>
-                          <FieldLabel>Border width</FieldLabel>
-                          <NumberInput value={theme.cardBorderWidth} onChange={v => updateTheme('cardBorderWidth', v)} min={0} max={8} suffix="px" />
-                        </div>
-                        <div>
-                          <FieldLabel>Border color</FieldLabel>
-                          <ColorPicker value={theme.cardBorderColor} onChange={v => updateTheme('cardBorderColor', v)} />
-                        </div>
-                        <div>
-                          <FieldLabel>Border radius</FieldLabel>
-                          <NumberInput value={theme.cardBorderRadius} onChange={v => updateTheme('cardBorderRadius', v)} min={0} max={99} suffix="px" />
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <FieldLabel>Background</FieldLabel>
-                        <ColorPicker value={theme.cardBgColor} onChange={v => updateTheme('cardBgColor', v)} />
-                      </div>
-                      <div className="flex gap-5 mt-2">
-                        <CheckItem label="Show price" checked={theme.showProductPrice} onChange={v => updateTheme('showProductPrice', v)} />
-                        <CheckItem label="Show description" checked={theme.showProductDescription} onChange={v => updateTheme('showProductDescription', v)} />
-                      </div>
-                    </div>
-
-                    <div className="border-t border-[#f1f5f9] pt-3">
-                      <p className="text-[11px] font-medium text-[#334155] mb-1">Category cards</p>
-                      <CheckItem label="Show description" checked={theme.showCategoryDescription} onChange={v => updateTheme('showCategoryDescription', v)} />
-                    </div>
-                  </div>
-
-                  {/* Live preview */}
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide">Preview</p>
-                    <LiveProductCard theme={theme} />
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Typography */}
-              <SectionDivider label="Typography" />
-              <div className="px-4 py-4">
-                <div className="flex items-start gap-10">
-                  <div>
-                    <FieldLabel>Font family</FieldLabel>
-                    <select
-                      value={theme.fontFamily}
-                      onChange={e => updateTheme('fontFamily', e.target.value)}
-                      className="text-[12px] border border-[#e5e7eb] rounded-md px-2 py-[5px] text-[#334155] bg-white outline-none focus:border-[#a1a1aa] w-[160px]"
-                    >
-                      <optgroup label="Sans-serif">
-                        {['Inter', 'Roboto', 'Poppins', 'Montserrat'].map(f => (
-                          <option key={f}>{f}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Serif">
-                        {['Playfair Display', 'Merriweather', 'Lora', 'EB Garamond'].map(f => (
-                          <option key={f}>{f}</option>
-                        ))}
-                      </optgroup>
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <FieldLabel>Colors</FieldLabel>
-                    <div className="flex flex-col">
-                      <ColorRow label="Card name"     value={theme.colorCardName}     onChange={v => updateTheme('colorCardName', v)} />
-                      <ColorRow label="Section label" value={theme.colorSectionLabel} onChange={v => updateTheme('colorSectionLabel', v)} />
-                      <ColorRow label="Description"   value={theme.colorProductDesc}  onChange={v => updateTheme('colorProductDesc', v)} />
-                      <ColorRow label="Suggestions"   value={theme.colorSuggestions}  onChange={v => updateTheme('colorSuggestions', v)} />
-                      <ColorRow label="Price"         value={theme.colorProductPrice} onChange={v => updateTheme('colorProductPrice', v)} />
-                      <ColorRow label="Search input"  value={theme.colorSearchInput}  onChange={v => updateTheme('colorSearchInput', v)} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Images & Layout */}
-              <SectionDivider label="Images & Layout" />
-              <div className="px-4 py-4">
-                <div className="flex items-end gap-10">
-                  <div>
-                    <FieldLabel>Image size</FieldLabel>
-                    <div className="flex items-center gap-2">
-                      <NumberInput value={theme.imageRatioW} onChange={v => updateTheme('imageRatioW', v)} min={1} max={99} />
-                      <span className="text-[13px] text-[#94a3b8]">:</span>
-                      <NumberInput value={theme.imageRatioH} onChange={v => updateTheme('imageRatioH', v)} min={1} max={99} />
-                    </div>
-                  </div>
-                  <div>
-                    <FieldLabel>Categories shown</FieldLabel>
-                    <div className="flex bg-[#f1f5f9] rounded-lg p-[2px] gap-[2px] w-fit">
-                      {([4, 5] as const).map(n => (
-                        <button
-                          key={n}
-                          onClick={() => updateTheme('categoryCount', n)}
-                          className={`w-8 text-[12px] font-medium py-1 rounded-md transition-all duration-150 ${
-                            theme.categoryCount === n
-                              ? 'bg-white text-[#020617] shadow-sm'
-                              : 'text-[#64748b] hover:text-[#334155]'
-                          }`}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <FieldLabel>Product scroll</FieldLabel>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => updateTheme('enableProductScroll', !theme.enableProductScroll)}
-                        className={`relative flex items-center h-[22px] w-[40px] rounded-full px-[2px] transition-colors duration-200 shrink-0 ${theme.enableProductScroll ? 'bg-[#18181b]' : 'bg-[#e4e4e7]'}`}
-                      >
-                        <span className={`block size-[18px] rounded-full bg-white shadow-sm transition-transform duration-200 ${theme.enableProductScroll ? 'translate-x-[18px]' : 'translate-x-0'}`} />
-                      </button>
-                      <span className="text-[12px] text-[#334155]">Enable scroll</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        </main>
+      {/* Page tab strip */}
+      <div className="border-b border-[#e5e7eb] bg-white h-10 shrink-0">
+        <div className="max-w-[1280px] mx-auto h-full flex items-center gap-0.5 px-5">
+          <Link href="/search-test" className="px-3 h-7 flex items-center text-[13px] rounded-md font-medium text-[#020617] bg-[#f4f4f5]">
+            Configuration
+          </Link>
+          <Link href="/search-test/ab-test" className="px-3 h-7 flex items-center text-[13px] rounded-md text-[#71717a] hover:text-[#334155] hover:bg-[#f4f4f5] transition-colors">
+            A/B Testing
+          </Link>
+        </div>
       </div>
+
+      <main className="flex-1 overflow-hidden bg-[#f9f9f9]">
+        <div className="h-full max-w-[1280px] mx-auto flex gap-4 p-6">
+
+          {/* Left panel: Features / Theme tabs */}
+          <div className="w-[400px] shrink-0 bg-white rounded-xl border border-[#e5e7eb] flex flex-col overflow-hidden">
+            <div className="flex border-b border-[#e5e7eb] shrink-0">
+              {(['features', 'theme'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-1 h-10 text-[13px] font-medium border-b-2 -mb-px transition-colors capitalize ${
+                    activeTab === tab
+                      ? 'text-[#020617] border-[#18181b]'
+                      : 'text-[#71717a] border-transparent hover:text-[#334155]'
+                  }`}
+                >
+                  {tab === 'features' ? 'Features' : 'Theme'}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {activeTab === 'features' ? (
+                <>
+                  {/* Device sub-tabs — synced with live preview mode */}
+                  <div className="flex border-b border-[#e5e7eb] px-4 bg-white sticky top-0 z-10">
+                    {(['desktop', 'mobile'] as const).map(device => (
+                      <button
+                        key={device}
+                        onClick={() => setPreviewMode(device)}
+                        className={`flex items-center gap-1.5 mr-5 py-3 text-[12px] font-medium border-b-2 -mb-px transition-colors capitalize ${
+                          previewMode === device
+                            ? 'text-[#020617] border-[#18181b]'
+                            : 'text-[#71717a] border-transparent hover:text-[#334155]'
+                        }`}
+                      >
+                        {device === 'desktop' ? <Monitor size={12} /> : <Smartphone size={12} />}
+                        {device}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="px-4 pb-6">
+                    {previewMode === 'desktop' ? (
+                      <>
+                        <div className="pt-3">
+                          <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Default view</p>
+                          <ConfigToggle label="Suggested Categories" checked={config.showSuggestedCategories} onChange={v => update('showSuggestedCategories', v)} />
+                          <ConfigToggle label="Handpicked for you" checked={config.showHandpickedForYou} onChange={v => update('showHandpickedForYou', v)} />
+                        </div>
+                        <div className="pt-4">
+                          <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Left sidebar</p>
+                          <ConfigToggle label="Show left sidebar" checked={config.showLeftSidebar} onChange={v => update('showLeftSidebar', v)} />
+                          <ConfigToggle label="Trending" description="Shown in default state" checked={config.showTrending} onChange={v => update('showTrending', v)} />
+                          {config.showTrending && (
+                            <div className="flex items-center gap-2 py-2 border-b border-[#f1f5f9] pl-1">
+                              <span className="text-[12px] text-[#94a3b8]">Show</span>
+                              <NumberInput value={config.trendingCount} onChange={v => update('trendingCount', v)} min={1} max={8} />
+                              <span className="text-[12px] text-[#94a3b8]">items</span>
+                            </div>
+                          )}
+                          <ConfigToggle label="Recent searches" description="Shown in default state" checked={config.showRecentSearches} onChange={v => update('showRecentSearches', v)} />
+                          {config.showLeftSidebar && config.showRecentSearches && (
+                            <div className="flex items-center gap-2 py-2 border-b border-[#f1f5f9] pl-1">
+                              <span className="text-[12px] text-[#94a3b8]">Show</span>
+                              <NumberInput value={config.recentCount} onChange={v => update('recentCount', v)} min={1} max={8} />
+                              <span className="text-[12px] text-[#94a3b8]">items</span>
+                            </div>
+                          )}
+                          <ConfigToggle label="Auto-suggestions" description="Shown while typing" checked={config.showAutoSuggestions} onChange={v => update('showAutoSuggestions', v)} />
+                        </div>
+                        <div className="pt-4">
+                          <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Search with AI</p>
+                          <ConfigToggle label="Enable Search with AI" checked={config.showSearchWithAI} onChange={v => update('showSearchWithAI', v)} />
+                          {config.showSearchWithAI && (
+                            <SegmentedControl value={config.aiDisplayStyle} onChange={v => update('aiDisplayStyle', v)} />
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="pt-3">
+                          <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Default view</p>
+                          <ConfigToggle label="Suggested Categories" checked={config.mobileShowSuggestedCategories} onChange={v => update('mobileShowSuggestedCategories', v)} />
+                          <ConfigToggle label="Handpicked for you" checked={config.mobileShowHandpickedForYou} onChange={v => update('mobileShowHandpickedForYou', v)} />
+                        </div>
+                        <div className="pt-4">
+                          <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Suggestions</p>
+                          <ConfigToggle label="Trending" checked={config.mobileShowTrending} onChange={v => update('mobileShowTrending', v)} />
+                          {config.mobileShowTrending && (
+                            <div className="flex items-center gap-2 py-2 border-b border-[#f1f5f9] pl-1">
+                              <span className="text-[12px] text-[#94a3b8]">Show</span>
+                              <NumberInput value={config.mobileTrendingCount} onChange={v => update('mobileTrendingCount', v)} min={1} max={20} />
+                              <span className="text-[12px] text-[#94a3b8]">chips</span>
+                            </div>
+                          )}
+                          <ConfigToggle label="Recent searches" checked={config.mobileShowRecentSearches} onChange={v => update('mobileShowRecentSearches', v)} />
+                          {config.mobileShowRecentSearches && (
+                            <div className="flex items-center gap-2 py-2 border-b border-[#f1f5f9] pl-1">
+                              <span className="text-[12px] text-[#94a3b8]">Show</span>
+                              <NumberInput value={config.mobileRecentCount} onChange={v => update('mobileRecentCount', v)} min={1} max={20} />
+                              <span className="text-[12px] text-[#94a3b8]">chips</span>
+                            </div>
+                          )}
+                          <ConfigToggle label="Auto-suggestions" description="Shown while typing" checked={config.mobileShowAutoSuggestions} onChange={v => update('mobileShowAutoSuggestions', v)} />
+                        </div>
+                        <div className="pt-4">
+                          <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Search with AI</p>
+                          <ConfigToggle label="Enable Search with AI" checked={config.mobileShowSearchWithAI} onChange={v => update('mobileShowSearchWithAI', v)} />
+                          {config.mobileShowSearchWithAI && (
+                            <SegmentedControl value={config.mobileAiDisplayStyle} onChange={v => update('mobileAiDisplayStyle', v)} />
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="pb-6">
+
+                  {/* Global */}
+                  <SectionDivider label="Global" />
+                  <div className="px-4 py-2">
+                    <ThemeRow label="Shadow">
+                      <div className="flex bg-[#f1f5f9] rounded-lg p-[3px] gap-[2px]">
+                        {(['none', 'sm', 'md', 'lg'] as const).map(opt => (
+                          <button
+                            key={opt}
+                            onClick={() => updateTheme('shadow', opt)}
+                            className={`px-2.5 text-[11px] font-medium py-[5px] rounded-md transition-all duration-150 capitalize ${
+                              theme.shadow === opt ? 'bg-white text-[#020617] shadow-sm' : 'text-[#64748b] hover:text-[#334155]'
+                            }`}
+                          >
+                            {opt === 'none' ? 'None' : opt === 'sm' ? 'Small' : opt === 'md' ? 'Medium' : 'Large'}
+                          </button>
+                        ))}
+                      </div>
+                    </ThemeRow>
+                    <ThemeRow label="Font Family">
+                      <select
+                        value={theme.fontFamily}
+                        onChange={e => updateTheme('fontFamily', e.target.value)}
+                        className="text-[12px] border border-[#e5e7eb] rounded-md px-2 py-[4px] text-[#334155] bg-white outline-none focus:border-[#a1a1aa] w-[140px]"
+                      >
+                        <optgroup label="Sans-serif">
+                          {['Inter', 'Roboto', 'Poppins', 'Montserrat'].map(f => <option key={f}>{f}</option>)}
+                        </optgroup>
+                        <optgroup label="Serif">
+                          {['Playfair Display', 'Merriweather', 'Lora', 'EB Garamond'].map(f => <option key={f}>{f}</option>)}
+                        </optgroup>
+                      </select>
+                    </ThemeRow>
+                  </div>
+
+                  {/* Widget Container */}
+                  <SectionDivider label="Widget Container" />
+                  <div className="px-4 py-2">
+                    <ThemeRow label="Background Color"><ColorPicker value={theme.widgetBgColor} onChange={v => updateTheme('widgetBgColor', v)} /></ThemeRow>
+                    <ThemeRow label="Background Opacity"><NumberInput value={theme.widgetOpacity} onChange={v => updateTheme('widgetOpacity', v)} min={0} max={100} suffix="%" /></ThemeRow>
+                    <ThemeRow label="Border Color"><ColorPicker value={theme.widgetBorderColor} onChange={v => updateTheme('widgetBorderColor', v)} /></ThemeRow>
+                    <ThemeRow label="Border Width"><NumberInput value={theme.widgetBorderWidth} onChange={v => updateTheme('widgetBorderWidth', v)} min={0} max={8} suffix="px" /></ThemeRow>
+                    <ThemeRow label="Border Radius"><NumberInput value={theme.widgetBorderRadius} onChange={v => updateTheme('widgetBorderRadius', v)} min={0} max={40} suffix="px" /></ThemeRow>
+                  </div>
+
+                  {/* Search Input */}
+                  <SectionDivider label="Search Input" />
+                  <div className="px-4 py-2">
+                    <ThemeRow label="Text Color"><ColorPicker value={theme.colorSearchInput} onChange={v => updateTheme('colorSearchInput', v)} /></ThemeRow>
+                    <ThemeRow label="Placeholder Color"><ColorPicker value={theme.searchInputPlaceholderColor} onChange={v => updateTheme('searchInputPlaceholderColor', v)} /></ThemeRow>
+                    <ThemeRow label="Background Color"><ColorPicker value={theme.searchInputBgColor} onChange={v => updateTheme('searchInputBgColor', v)} /></ThemeRow>
+                    <ThemeRow label="Border Color"><ColorPicker value={theme.searchInputBorderColor} onChange={v => updateTheme('searchInputBorderColor', v)} /></ThemeRow>
+                    <ThemeRow label="Border Width"><NumberInput value={theme.searchInputBorderWidth} onChange={v => updateTheme('searchInputBorderWidth', v)} min={0} max={8} suffix="px" /></ThemeRow>
+                    <ThemeRow label="Border Radius"><NumberInput value={theme.searchInputBorderRadius} onChange={v => updateTheme('searchInputBorderRadius', v)} min={0} max={40} suffix="px" /></ThemeRow>
+                  </div>
+
+                  {/* Suggestions & Sidebar */}
+                  <SectionDivider label="Suggestions & Sidebar" />
+                  <div className="px-4 py-2">
+                    <ThemeSubLabel>Suggestions</ThemeSubLabel>
+                    <ThemeRow label="Text Color"><ColorPicker value={theme.colorSuggestions} onChange={v => updateTheme('colorSuggestions', v)} /></ThemeRow>
+                    <ThemeRow label="Hover Color"><ColorPicker value={theme.colorSuggestionHover} onChange={v => updateTheme('colorSuggestionHover', v)} /></ThemeRow>
+                    <ThemeRow label="Active Color"><ColorPicker value={theme.colorSuggestionActive} onChange={v => updateTheme('colorSuggestionActive', v)} /></ThemeRow>
+                    <ThemeSubLabel>Trending Searches</ThemeSubLabel>
+                    <ThemeRow label="Text Color"><ColorPicker value={theme.colorTrendingText} onChange={v => updateTheme('colorTrendingText', v)} /></ThemeRow>
+                    <ThemeSubLabel>Section Labels</ThemeSubLabel>
+                    <ThemeRow label="Text Color"><ColorPicker value={theme.colorSidebarLabel} onChange={v => updateTheme('colorSidebarLabel', v)} /></ThemeRow>
+                  </div>
+
+                  {/* Product Cards */}
+                  <SectionDivider label="Product Cards" />
+                  <div className="px-4 py-2">
+                    <ThemeSubLabel>Card Appearance</ThemeSubLabel>
+                    <ThemeRow label="Background Color"><ColorPicker value={theme.cardBgColor} onChange={v => updateTheme('cardBgColor', v)} /></ThemeRow>
+                    <ThemeRow label="Border Color"><ColorPicker value={theme.cardBorderColor} onChange={v => updateTheme('cardBorderColor', v)} /></ThemeRow>
+                    <ThemeRow label="Border Width"><NumberInput value={theme.cardBorderWidth} onChange={v => updateTheme('cardBorderWidth', v)} min={0} max={8} suffix="px" /></ThemeRow>
+                    <ThemeRow label="Border Radius"><NumberInput value={theme.cardBorderRadius} onChange={v => updateTheme('cardBorderRadius', v)} min={0} max={99} suffix="px" /></ThemeRow>
+                    <ThemeRow label="Hover Effect">
+                      <HoverEffectControl value={theme.cardHoverEffect} onChange={v => updateTheme('cardHoverEffect', v)} />
+                    </ThemeRow>
+                    <ThemeSubLabel>Product Image</ThemeSubLabel>
+                    <ThemeRow label="Aspect Ratio">
+                      <div className="flex items-center gap-1.5">
+                        <NumberInput value={theme.imageRatioW} onChange={v => updateTheme('imageRatioW', v)} min={1} max={99} />
+                        <span className="text-[12px] text-[#94a3b8]">:</span>
+                        <NumberInput value={theme.imageRatioH} onChange={v => updateTheme('imageRatioH', v)} min={1} max={99} />
+                      </div>
+                    </ThemeRow>
+                    <ThemeRow label="Image Fit"><ImageFitControl value={theme.imageFit} onChange={v => updateTheme('imageFit', v)} /></ThemeRow>
+                    <ThemeRow label="Hover Zoom"><MiniToggle checked={theme.imageHoverZoom} onChange={v => updateTheme('imageHoverZoom', v)} /></ThemeRow>
+                    <ThemeSubLabel>Product Name</ThemeSubLabel>
+                    <ThemeRow label="Text Color"><ColorPicker value={theme.colorCardName} onChange={v => updateTheme('colorCardName', v)} /></ThemeRow>
+                    <ThemeSubLabel>Product Price</ThemeSubLabel>
+                    <ThemeRow label="Show"><MiniToggle checked={theme.showProductPrice} onChange={v => updateTheme('showProductPrice', v)} /></ThemeRow>
+                    {theme.showProductPrice && (
+                      <ThemeRow label="Text Color"><ColorPicker value={theme.colorProductPrice} onChange={v => updateTheme('colorProductPrice', v)} /></ThemeRow>
+                    )}
+                    <ThemeSubLabel>Product Description</ThemeSubLabel>
+                    <ThemeRow label="Show"><MiniToggle checked={theme.showProductDescription} onChange={v => updateTheme('showProductDescription', v)} /></ThemeRow>
+                    {theme.showProductDescription && (
+                      <ThemeRow label="Text Color"><ColorPicker value={theme.colorProductDesc} onChange={v => updateTheme('colorProductDesc', v)} /></ThemeRow>
+                    )}
+                  </div>
+
+                  {/* Category Cards */}
+                  <SectionDivider label="Category Cards" />
+                  <div className="px-4 py-2">
+                    <ThemeSubLabel>Card Appearance</ThemeSubLabel>
+                    <ThemeRow label="Inherit product styling"><MiniToggle checked={theme.inheritCategoryCardStyling} onChange={v => updateTheme('inheritCategoryCardStyling', v)} /></ThemeRow>
+                    {!theme.inheritCategoryCardStyling && (
+                      <>
+                        <ThemeRow label="Background Color"><ColorPicker value={theme.categoryCardBgColor} onChange={v => updateTheme('categoryCardBgColor', v)} /></ThemeRow>
+                        <ThemeRow label="Border Color"><ColorPicker value={theme.categoryCardBorderColor} onChange={v => updateTheme('categoryCardBorderColor', v)} /></ThemeRow>
+                        <ThemeRow label="Border Width"><NumberInput value={theme.categoryCardBorderWidth} onChange={v => updateTheme('categoryCardBorderWidth', v)} min={0} max={8} suffix="px" /></ThemeRow>
+                        <ThemeRow label="Border Radius"><NumberInput value={theme.categoryCardBorderRadius} onChange={v => updateTheme('categoryCardBorderRadius', v)} min={0} max={99} suffix="px" /></ThemeRow>
+                      </>
+                    )}
+                    <ThemeSubLabel>Category Name</ThemeSubLabel>
+                    <ThemeRow label="Text Color"><ColorPicker value={theme.colorCategoryName} onChange={v => updateTheme('colorCategoryName', v)} /></ThemeRow>
+                    <ThemeSubLabel>Category Description</ThemeSubLabel>
+                    <ThemeRow label="Show"><MiniToggle checked={theme.showCategoryDescription} onChange={v => updateTheme('showCategoryDescription', v)} /></ThemeRow>
+                    {theme.showCategoryDescription && (
+                      <ThemeRow label="Text Color"><ColorPicker value={theme.colorCategoryDesc} onChange={v => updateTheme('colorCategoryDesc', v)} /></ThemeRow>
+                    )}
+                    <ThemeSubLabel>Layout</ThemeSubLabel>
+                    <ThemeRow label="Product scroll"><MiniToggle checked={theme.enableProductScroll} onChange={v => updateTheme('enableProductScroll', v)} /></ThemeRow>
+                  </div>
+
+                  {/* Section Headers */}
+                  <SectionDivider label="Section Headers" />
+                  <div className="px-4 py-2">
+                    <ThemeRow label="Text Color"><ColorPicker value={theme.colorSectionLabel} onChange={v => updateTheme('colorSectionLabel', v)} /></ThemeRow>
+                  </div>
+
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right panel: live preview */}
+          <div className="flex-1 min-w-0 bg-white rounded-xl border border-[#e5e7eb] flex flex-col overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between shrink-0">
+              <p className="text-[13px] font-semibold text-[#020617]">Live Preview</p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPreviewMode('desktop')}
+                  className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${previewMode === 'desktop' ? 'bg-[#f4f4f5] text-[#020617]' : 'text-[#a1a1aa] hover:text-[#64748b]'}`}
+                >
+                  <Monitor size={15} />
+                </button>
+                <button
+                  onClick={() => setPreviewMode('mobile')}
+                  className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${previewMode === 'mobile' ? 'bg-[#f4f4f5] text-[#020617]' : 'text-[#a1a1aa] hover:text-[#64748b]'}`}
+                >
+                  <Smartphone size={15} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-6">
+              {previewMode === 'desktop' ? (
+                <ScaledPreview naturalWidth={config.showLeftSidebar ? 1000 : 775}>
+                  <SearchModal preview onClose={() => {}} config={config} theme={theme} />
+                </ScaledPreview>
+              ) : (
+                <div
+                  className="rounded-[44px] border-[10px] border-[#18181b] shadow-2xl overflow-hidden flex flex-col shrink-0"
+                  style={{ width: 390, height: 844 }}
+                >
+                  {/* Mock mobile nav */}
+                  <div className="h-16 border-b border-[#e5e7eb] bg-white shrink-0 flex items-center px-5">
+                    <div className="w-7 h-7 rounded-md bg-[#18181b] flex items-center justify-center mr-auto">
+                      <span className="text-white text-xs font-bold tracking-tight">S</span>
+                    </div>
+                    <Search size={18} className="text-[#52525b]" />
+                  </div>
+                  {/* Interactive mobile widget */}
+                  <MobileSearchWidget preview onClose={() => {}} config={config} theme={theme} />
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </main>
     </div>
   );
 }

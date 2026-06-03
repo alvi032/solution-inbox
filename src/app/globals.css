@@ -142,6 +142,18 @@
   100% { transform: scaleX(-1) rotate(0deg); }
 }
 
+@keyframes ai-gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.search-ai-btn {
+  background: linear-gradient(90deg, #fef7ee, #faeac8, #f7e0b0, #faeac8, #fef7ee);
+  background-size: 250% 100%;
+  animation: ai-gradient-shift 3s ease infinite;
+}
+
 .search-ai-btn:hover .wand-icon {
   animation: wand-flick 0.65s forwards;
 }
