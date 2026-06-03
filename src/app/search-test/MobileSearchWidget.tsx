@@ -12,8 +12,11 @@ const CAT_IMGS = [
   'https://www.figma.com/api/mcp/asset/909d1ec9-2a7a-4cdd-a91d-ab3f79efb013',
   'https://www.figma.com/api/mcp/asset/700c6348-2c4c-44c4-b7ac-68d106e54984',
   'https://www.figma.com/api/mcp/asset/0459e717-46ba-4ec3-b778-15fd9aaf8a5b',
+  'https://www.figma.com/api/mcp/asset/0ab7f4b9-bfc1-4f3c-a212-854b72129d43',
+  'https://www.figma.com/api/mcp/asset/d1137e29-43a8-4813-8dd1-9fddf87064f9',
+  'https://www.figma.com/api/mcp/asset/909d1ec9-2a7a-4cdd-a91d-ab3f79efb013',
 ];
-const CATEGORIES = ['Gourmand', 'Candy', 'Gourmand Creme', 'Rainforest', 'Perfume Oil'];
+const CATEGORIES = ['Gourmand', 'Candy', 'Gourmand Creme', 'Rainforest', 'Perfume Oil', 'Citrus', 'Floral', 'Woody'];
 
 const PRODUCTS = [
   { name: 'Sweven',        desc: 'Elegant citrus and amber scent.',  price: '$45', img: 'https://www.figma.com/api/mcp/asset/e74188b9-4157-4ef3-b8ca-7f1c8ba06fee' },
@@ -210,8 +213,8 @@ export default function MobileSearchWidget({ onClose, config, theme, preview = f
   const inputRef = useRef<HTMLInputElement>(null);
   const isTyping = query.length > 0;
 
-  const visibleCategories = CATEGORIES.slice(0, 4);
-  const visibleCatImgs = CAT_IMGS.slice(0, 4);
+  const visibleCategories = CATEGORIES.slice(0, config.mobileCategoryCount);
+  const visibleCatImgs = CAT_IMGS.slice(0, config.mobileCategoryCount);
 
   useEffect(() => {
     if (!isTyping) { setShowEmpty(false); return; }
@@ -333,7 +336,7 @@ export default function MobileSearchWidget({ onClose, config, theme, preview = f
             <div className="flex flex-col gap-3">
               <SectionHeading icon={<Search size={16} />} label="Matching Products" color={theme.colorSectionLabel} />
               <div className="grid grid-cols-2 gap-3">
-                {PRODUCTS.map(p => (
+                {PRODUCTS.slice(0, config.mobileProductCount).map(p => (
                   <MobileProductCard key={p.name} {...p} theme={theme} />
                 ))}
               </div>
@@ -409,7 +412,7 @@ export default function MobileSearchWidget({ onClose, config, theme, preview = f
               <div className="flex flex-col gap-3">
                 <SectionHeading icon={<HandHeart size={16} />} label="Handpicked for you" color={theme.colorSectionLabel} />
                 <div className="grid grid-cols-2 gap-3">
-                  {PRODUCTS.slice(0, 4).map(p => (
+                  {PRODUCTS.slice(0, config.mobileProductCount).map(p => (
                     <MobileProductCard key={p.name} {...p} theme={theme} />
                   ))}
                 </div>

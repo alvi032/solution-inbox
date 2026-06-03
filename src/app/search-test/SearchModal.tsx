@@ -13,8 +13,11 @@ const CAT_IMGS = [
   'https://www.figma.com/api/mcp/asset/909d1ec9-2a7a-4cdd-a91d-ab3f79efb013',
   'https://www.figma.com/api/mcp/asset/700c6348-2c4c-44c4-b7ac-68d106e54984',
   'https://www.figma.com/api/mcp/asset/0459e717-46ba-4ec3-b778-15fd9aaf8a5b',
+  'https://www.figma.com/api/mcp/asset/0ab7f4b9-bfc1-4f3c-a212-854b72129d43',
+  'https://www.figma.com/api/mcp/asset/d1137e29-43a8-4813-8dd1-9fddf87064f9',
+  'https://www.figma.com/api/mcp/asset/909d1ec9-2a7a-4cdd-a91d-ab3f79efb013',
 ];
-const CATEGORIES = ['Gourmand', 'Candy', 'Gourmand Creme', 'Rainforest', 'Perfume Oil'];
+const CATEGORIES = ['Gourmand', 'Candy', 'Gourmand Creme', 'Rainforest', 'Perfume Oil', 'Citrus', 'Floral', 'Woody'];
 
 const PRODUCTS = [
   { name: 'Sweven',        desc: 'Elegant citrus and amber scent.',  price: '$45', img: 'https://www.figma.com/api/mcp/asset/e74188b9-4157-4ef3-b8ca-7f1c8ba06fee' },
@@ -221,6 +224,7 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const productsScrollRef = useRef<HTMLDivElement>(null);
+  const categoriesScrollRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');
   const [aiEnabled, setAiEnabled] = useState(false);
   const [recentSearches, setRecentSearches] = useState(RECENT_SEARCHES);
@@ -228,19 +232,20 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
   const [showEmpty, setShowEmpty] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [canCatScrollLeft, setCanCatScrollLeft] = useState(false);
+  const [canCatScrollRight, setCanCatScrollRight] = useState(true);
   const isTyping = query.length > 0;
 
-  const visibleCategories = CATEGORIES.slice(0, 4);
-  const visibleCatImgs = CAT_IMGS.slice(0, 4);
-  const visibleProducts = theme.enableProductScroll ? PRODUCTS : PRODUCTS.slice(0, 4);
+  const visibleCategories = CATEGORIES.slice(0, config.categoryCount);
+  const visibleCatImgs = CAT_IMGS.slice(0, config.categoryCount);
+  const visibleProducts = PRODUCTS.slice(0, config.productCount);
   const visibleRecent = recentSearches.slice(0, config.recentCount);
   const visibleTrending = TRENDING_CHIPS.slice(0, config.trendingCount);
 
   function scrollProducts(dir: 'left' | 'right') {
     const el = productsScrollRef.current;
     if (!el) return;
-    const pageSize = el.clientWidth + 10; // clientWidth + gap so next page aligns to card edge
-    el.scrollBy({ left: dir === 'right' ? pageSize : -pageSize, behavior: 'smooth' });
+    el.scrollBy({ left: dir === 'right' ? el.clientWidth + 10 : -(el.clientWidth + 10), behavior: 'smooth' });
   }
 
   function handleProductsScroll() {
@@ -248,6 +253,19 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
     if (!el) return;
     setCanScrollLeft(el.scrollLeft > 0);
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }
+
+  function scrollCategories(dir: 'left' | 'right') {
+    const el = categoriesScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === 'right' ? el.clientWidth + 10 : -(el.clientWidth + 10), behavior: 'smooth' });
+  }
+
+  function handleCategoriesScroll() {
+    const el = categoriesScrollRef.current;
+    if (!el) return;
+    setCanCatScrollLeft(el.scrollLeft > 0);
+    setCanCatScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
   }
 
   const outerBorder = `${theme.widgetBorderWidth}px solid ${theme.widgetBorderColor}`;
@@ -279,10 +297,32 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
               label={isTyping ? 'Recommended Categories' : 'Suggested Categories'}
               color={theme.colorSectionLabel}
             />
-            <div className="flex gap-[10px]">
-              {visibleCategories.map((cat, i) => (
-                <CategoryCard key={cat} name={cat} img={visibleCatImgs[i]} theme={theme} />
-              ))}
+            <div className="relative">
+              <div
+                ref={categoriesScrollRef}
+                onScroll={handleCategoriesScroll}
+                className={`flex gap-[10px] ${config.enableCategoryScroll ? 'overflow-x-auto scrollbar-hide' : ''}`}
+              >
+                {visibleCategories.map((cat, i) => (
+                  <CategoryCard key={cat} name={cat} img={visibleCatImgs[i]} theme={theme} />
+                ))}
+              </div>
+              {config.enableCategoryScroll && canCatScrollLeft && (
+                <button
+                  onClick={() => scrollCategories('left')}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
+                >
+                  <ChevronLeft size={14} className="text-[#334155]" />
+                </button>
+              )}
+              {config.enableCategoryScroll && canCatScrollRight && (
+                <button
+                  onClick={() => scrollCategories('right')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
+                >
+                  <ChevronRight size={14} className="text-[#334155]" />
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -299,13 +339,13 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
               <div
                 ref={productsScrollRef}
                 onScroll={handleProductsScroll}
-                className={`flex gap-[10px] ${theme.enableProductScroll ? 'overflow-x-auto scrollbar-hide' : ''}`}
+                className={`flex gap-[10px] ${config.enableProductScroll ? 'overflow-x-auto scrollbar-hide' : ''}`}
               >
                 {visibleProducts.map((p) => (
-                  <ProductCard key={p.name} {...p} theme={theme} scrollable={theme.enableProductScroll} />
+                  <ProductCard key={p.name} {...p} theme={theme} scrollable={config.enableProductScroll} />
                 ))}
               </div>
-              {theme.enableProductScroll && canScrollLeft && (
+              {config.enableProductScroll && canScrollLeft && (
                 <button
                   onClick={() => scrollProducts('left')}
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"
@@ -313,7 +353,7 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
                   <ChevronLeft size={14} className="text-[#334155]" />
                 </button>
               )}
-              {theme.enableProductScroll && canScrollRight && (
+              {config.enableProductScroll && canScrollRight && (
                 <button
                   onClick={() => scrollProducts('right')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-[#e5e7eb] rounded-full flex items-center justify-center shadow-md hover:bg-[#f4f4f5] transition-colors"

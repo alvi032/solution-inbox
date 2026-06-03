@@ -49,14 +49,17 @@ const DEFAULT_THEME: ThemeConfig = {
   colorCategoryName: '#334155',
   showCategoryDescription: false,
   colorCategoryDesc: '#64748b',
-  enableProductScroll: false,
 };
 
 const VARIANT_A_DEFAULT: SearchConfig = {
   showTrending: true,
   trendingCount: 5,
   showSuggestedCategories: true,
+  categoryCount: 4,
+  enableCategoryScroll: false,
   showHandpickedForYou: true,
+  productCount: 4,
+  enableProductScroll: false,
   showSearchWithAI: true,
   showLeftSidebar: true,
   showRecentSearches: true,
@@ -65,7 +68,9 @@ const VARIANT_A_DEFAULT: SearchConfig = {
   mobileShowTrending: true,
   mobileTrendingCount: 8,
   mobileShowSuggestedCategories: true,
+  mobileCategoryCount: 4,
   mobileShowHandpickedForYou: true,
+  mobileProductCount: 4,
   mobileShowRecentSearches: true,
   mobileRecentCount: 8,
   mobileShowAutoSuggestions: true,
@@ -76,7 +81,11 @@ const VARIANT_B_DEFAULT: SearchConfig = {
   showTrending: true,
   trendingCount: 5,
   showSuggestedCategories: true,
+  categoryCount: 4,
+  enableCategoryScroll: false,
   showHandpickedForYou: true,
+  productCount: 4,
+  enableProductScroll: false,
   showSearchWithAI: true,
   showLeftSidebar: true,
   showRecentSearches: true,
@@ -85,7 +94,9 @@ const VARIANT_B_DEFAULT: SearchConfig = {
   mobileShowTrending: true,
   mobileTrendingCount: 8,
   mobileShowSuggestedCategories: true,
+  mobileCategoryCount: 4,
   mobileShowHandpickedForYou: true,
+  mobileProductCount: 4,
   mobileShowRecentSearches: true,
   mobileRecentCount: 8,
   mobileShowAutoSuggestions: true,
@@ -123,9 +134,7 @@ type VariantStats = {
 function computeStats(config: SearchConfig, seed: number): VariantStats {
   return {
     sessions: seed,
-    aiEngagement: !config.showSearchWithAI
-      ? 0
-      : config.aiDisplayStyle === 'cta' ? 23.1 : 15.4,
+    aiEngagement: !config.showSearchWithAI ? 0 : 23.1,
     categoriesCtr: config.showSuggestedCategories ? 36.2 : 0,
     productsCtr: config.showHandpickedForYou ? 25.1 : 0,
     sidebarEngagement: !config.showLeftSidebar
@@ -205,8 +214,8 @@ function InlineWidget({ config }: { config: SearchConfig }) {
           <div className="w-[155px] shrink-0 border-r border-[#e5e7eb]">
             {/* AI */}
             {config.showSearchWithAI && (
-              <div className={`border-b border-[#e5e7eb] ${config.aiDisplayStyle === 'toggle' ? 'flex items-center justify-between px-3 py-2' : 'p-2'}`}>
-                {config.aiDisplayStyle === 'toggle' ? (
+              <div className="border-b border-[#e5e7eb] p-2">
+                {false ? (
                   <>
                     <span className="text-[11.5px] font-semibold text-[#0f172a]">Search with AI</span>
                     <MiniToggle on={aiEnabled} onToggle={() => setAiEnabled(v => !v)} />
@@ -420,9 +429,6 @@ function VariantCard({
         <div>
           <p className="text-[10px] text-[#c0c9d4] uppercase tracking-wide pt-1 pb-0.5">Search with AI</p>
           <FeatureRow label="Enable Search with AI" checked={config.showSearchWithAI} onChange={v => update('showSearchWithAI', v)} />
-          {config.showSearchWithAI && (
-            <AIStylePicker value={config.aiDisplayStyle} onChange={v => update('aiDisplayStyle', v)} />
-          )}
         </div>
       </div>
 

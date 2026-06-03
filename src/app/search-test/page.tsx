@@ -14,7 +14,11 @@ export type SearchConfig = {
   showTrending: boolean;
   trendingCount: number;
   showSuggestedCategories: boolean;
+  categoryCount: 4 | 8;
+  enableCategoryScroll: boolean;
   showHandpickedForYou: boolean;
+  productCount: 4 | 8;
+  enableProductScroll: boolean;
   showSearchWithAI: boolean;
   showLeftSidebar: boolean;
   showRecentSearches: boolean;
@@ -24,7 +28,9 @@ export type SearchConfig = {
   mobileShowTrending: boolean;
   mobileTrendingCount: number;
   mobileShowSuggestedCategories: boolean;
+  mobileCategoryCount: 4 | 8;
   mobileShowHandpickedForYou: boolean;
+  mobileProductCount: 4 | 8;
   mobileShowRecentSearches: boolean;
   mobileRecentCount: number;
   mobileShowAutoSuggestions: boolean;
@@ -80,8 +86,6 @@ export type ThemeConfig = {
   colorCategoryName: string;
   showCategoryDescription: boolean;
   colorCategoryDesc: string;
-  // Layout
-  enableProductScroll: boolean;
 };
 
 
@@ -157,6 +161,24 @@ function HoverEffectControl({ value, onChange }: { value: 'none' | 'lift' | 'sha
           key={opt}
           onClick={() => onChange(opt)}
           className={`px-3 text-[11px] font-medium py-[5px] rounded-md transition-all duration-150 capitalize ${
+            value === opt ? 'bg-white text-[#020617] shadow-sm' : 'text-[#64748b] hover:text-[#334155]'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function CountToggle({ value, onChange }: { value: 4 | 8; onChange: (v: 4 | 8) => void }) {
+  return (
+    <div className="flex bg-[#f1f5f9] rounded-lg p-[3px] gap-[2px]">
+      {([4, 8] as const).map(opt => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`px-4 text-[11px] font-medium py-[5px] rounded-md transition-all duration-150 ${
             value === opt ? 'bg-white text-[#020617] shadow-sm' : 'text-[#64748b] hover:text-[#334155]'
           }`}
         >
@@ -330,7 +352,11 @@ export default function SearchTestPage() {
     showTrending: true,
     trendingCount: 5,
     showSuggestedCategories: true,
+    categoryCount: 4,
+    enableCategoryScroll: false,
     showHandpickedForYou: true,
+    productCount: 4,
+    enableProductScroll: false,
     showSearchWithAI: true,
     showLeftSidebar: true,
     showRecentSearches: true,
@@ -339,7 +365,9 @@ export default function SearchTestPage() {
     mobileShowTrending: true,
     mobileTrendingCount: 8,
     mobileShowSuggestedCategories: true,
+    mobileCategoryCount: 4,
     mobileShowHandpickedForYou: true,
+    mobileProductCount: 4,
     mobileShowRecentSearches: true,
     mobileRecentCount: 8,
     mobileShowAutoSuggestions: true,
@@ -395,8 +423,6 @@ export default function SearchTestPage() {
     colorCategoryName: '#334155',
     showCategoryDescription: false,
     colorCategoryDesc: '#64748b',
-    // Layout
-    enableProductScroll: false,
   });
 
   function update<K extends keyof SearchConfig>(key: K, value: SearchConfig[K]) {
@@ -471,7 +497,35 @@ export default function SearchTestPage() {
                         <div className="pt-3">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Default view</p>
                           <ConfigToggle label="Suggested Categories" checked={config.showSuggestedCategories} onChange={v => update('showSuggestedCategories', v)} />
+                          {config.showSuggestedCategories && (
+                            <>
+                              <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
+                                <span className="text-[12px] text-[#94a3b8]">Number of results</span>
+                                <CountToggle value={config.categoryCount} onChange={v => update('categoryCount', v)} />
+                              </div>
+                              {config.categoryCount === 8 && (
+                                <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
+                                  <span className="text-[12px] text-[#94a3b8]">Horizontal scroll</span>
+                                  <MiniToggle checked={config.enableCategoryScroll} onChange={v => update('enableCategoryScroll', v)} />
+                                </div>
+                              )}
+                            </>
+                          )}
                           <ConfigToggle label="Handpicked for you" checked={config.showHandpickedForYou} onChange={v => update('showHandpickedForYou', v)} />
+                          {config.showHandpickedForYou && (
+                            <>
+                              <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
+                                <span className="text-[12px] text-[#94a3b8]">Number of results</span>
+                                <CountToggle value={config.productCount} onChange={v => update('productCount', v)} />
+                              </div>
+                              {config.productCount === 8 && (
+                                <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
+                                  <span className="text-[12px] text-[#94a3b8]">Horizontal scroll</span>
+                                  <MiniToggle checked={config.enableProductScroll} onChange={v => update('enableProductScroll', v)} />
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
                         <div className="pt-4">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Left sidebar</p>
@@ -504,7 +558,19 @@ export default function SearchTestPage() {
                         <div className="pt-3">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Default view</p>
                           <ConfigToggle label="Suggested Categories" checked={config.mobileShowSuggestedCategories} onChange={v => update('mobileShowSuggestedCategories', v)} />
+                          {config.mobileShowSuggestedCategories && (
+                            <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
+                              <span className="text-[12px] text-[#94a3b8]">Number of results</span>
+                              <CountToggle value={config.mobileCategoryCount} onChange={v => update('mobileCategoryCount', v)} />
+                            </div>
+                          )}
                           <ConfigToggle label="Handpicked for you" checked={config.mobileShowHandpickedForYou} onChange={v => update('mobileShowHandpickedForYou', v)} />
+                          {config.mobileShowHandpickedForYou && (
+                            <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9] pl-1">
+                              <span className="text-[12px] text-[#94a3b8]">Number of results</span>
+                              <CountToggle value={config.mobileProductCount} onChange={v => update('mobileProductCount', v)} />
+                            </div>
+                          )}
                         </div>
                         <div className="pt-4">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Suggestions</p>
@@ -660,8 +726,6 @@ export default function SearchTestPage() {
                     {theme.showCategoryDescription && (
                       <ThemeRow label="Text Color"><ColorPicker value={theme.colorCategoryDesc} onChange={v => updateTheme('colorCategoryDesc', v)} /></ThemeRow>
                     )}
-                    <ThemeSubLabel>Layout</ThemeSubLabel>
-                    <ThemeRow label="Product scroll"><MiniToggle checked={theme.enableProductScroll} onChange={v => updateTheme('enableProductScroll', v)} /></ThemeRow>
                   </div>
 
                   {/* Section Headers */}
