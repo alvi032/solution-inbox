@@ -283,27 +283,15 @@ export default function MobileSearchWidget({ onClose, config, theme, preview = f
             {/* Search with AI + AI response + Auto-suggestions grouped tightly */}
             <div className="flex flex-col gap-2">
               {config.mobileShowSearchWithAI && (
-                config.mobileAiDisplayStyle === 'toggle' ? (
-                  <div className="flex items-center justify-between py-3 border-b border-[#f1f5f9]">
-                    <span className="text-[15px] font-semibold text-[#0f172a]">Search with AI</span>
-                    <button
-                      onClick={() => setAiEnabled(v => !v)}
-                      className={`relative flex items-center h-[24px] w-[44px] rounded-full px-[2px] transition-colors shrink-0 ${aiEnabled ? 'bg-[#18181b]' : 'bg-[#e4e4e7]'}`}
-                    >
-                      <span className={`block size-[20px] rounded-full bg-white shadow-md transition-transform ${aiEnabled ? 'translate-x-[20px]' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setAiEnabled(v => !v)}
-                    className={`flex items-center gap-2 text-[14px] px-4 py-3 rounded-xl w-full text-left group/ai ${aiEnabled ? 'border border-[#18181b] bg-white text-[#18181b]' : 'search-ai-btn border border-[#dfc49a] text-[#334155]'}`}
-                  >
-                    <span className="wand-icon shrink-0" style={{ transform: 'scaleX(-1)' }}>
-                      {aiEnabled ? <WandSparkles size={16} className="text-[#18181b]" /> : <WandGradientIcon size={16} />}
-                    </span>
-                    <span className={aiEnabled ? 'font-medium' : ''}>{aiEnabled ? 'AI search enabled' : `Search "${query}" with AI`}</span>
-                  </button>
-                )
+                <button
+                  onClick={() => setAiEnabled(v => !v)}
+                  className={`flex items-center gap-2 text-[14px] px-4 py-3 rounded-xl w-full text-left group/ai ${aiEnabled ? 'border border-[#18181b] bg-white text-[#18181b]' : 'search-ai-btn border border-[#dfc49a] text-[#334155]'}`}
+                >
+                  <span className="wand-icon shrink-0" style={{ transform: 'scaleX(-1)' }}>
+                    {aiEnabled ? <WandSparkles size={16} className="text-[#18181b]" /> : <WandGradientIcon size={16} />}
+                  </span>
+                  <span className={aiEnabled ? 'font-medium' : ''}>{aiEnabled ? 'AI search enabled' : `Search "${query}" with AI`}</span>
+                </button>
               )}
 
               {config.mobileShowAutoSuggestions && (

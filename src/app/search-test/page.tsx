@@ -16,7 +16,6 @@ export type SearchConfig = {
   showSuggestedCategories: boolean;
   showHandpickedForYou: boolean;
   showSearchWithAI: boolean;
-  aiDisplayStyle: 'toggle' | 'cta';
   showLeftSidebar: boolean;
   showRecentSearches: boolean;
   recentCount: number;
@@ -30,7 +29,6 @@ export type SearchConfig = {
   mobileRecentCount: number;
   mobileShowAutoSuggestions: boolean;
   mobileShowSearchWithAI: boolean;
-  mobileAiDisplayStyle: 'toggle' | 'cta';
 };
 
 export type ThemeConfig = {
@@ -107,35 +105,6 @@ function ConfigToggle({ label, description, checked, onChange }: {
       >
         <span className={`block size-[18px] rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? 'translate-x-[18px]' : 'translate-x-0'}`} />
       </button>
-    </div>
-  );
-}
-
-function SegmentedControl({ value, onChange }: {
-  value: 'toggle' | 'cta';
-  onChange: (v: 'toggle' | 'cta') => void;
-}) {
-  return (
-    <div className="py-3">
-      <p className="text-[12px] text-[#94a3b8] mb-2">Display style</p>
-      <div className="flex bg-[#f1f5f9] rounded-lg p-[3px] gap-[3px]">
-        {(['toggle', 'cta'] as const).map((opt) => (
-          <button
-            key={opt}
-            onClick={() => onChange(opt)}
-            className={`flex-1 text-[13px] font-medium py-1.5 rounded-md transition-all duration-150 ${
-              value === opt ? 'bg-white text-[#020617] shadow-sm' : 'text-[#64748b] hover:text-[#334155]'
-            }`}
-          >
-            {opt === 'toggle' ? 'Toggle' : 'CTA'}
-          </button>
-        ))}
-      </div>
-      <p className="text-[11px] text-[#94a3b8] mt-2 leading-[16px]">
-        {value === 'toggle'
-          ? 'Shows a toggle switch the user can flip on/off.'
-          : 'Shows a "Search [query] with AI" button the user can click.'}
-      </p>
     </div>
   );
 }
@@ -363,7 +332,6 @@ export default function SearchTestPage() {
     showSuggestedCategories: true,
     showHandpickedForYou: true,
     showSearchWithAI: true,
-    aiDisplayStyle: 'cta',
     showLeftSidebar: true,
     showRecentSearches: true,
     recentCount: 5,
@@ -376,7 +344,6 @@ export default function SearchTestPage() {
     mobileRecentCount: 8,
     mobileShowAutoSuggestions: true,
     mobileShowSearchWithAI: true,
-    mobileAiDisplayStyle: 'cta',
   });
 
   const [theme, setTheme] = useState<ThemeConfig>({
@@ -530,9 +497,6 @@ export default function SearchTestPage() {
                         <div className="pt-4">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Search with AI</p>
                           <ConfigToggle label="Enable Search with AI" checked={config.showSearchWithAI} onChange={v => update('showSearchWithAI', v)} />
-                          {config.showSearchWithAI && (
-                            <SegmentedControl value={config.aiDisplayStyle} onChange={v => update('aiDisplayStyle', v)} />
-                          )}
                         </div>
                       </>
                     ) : (
@@ -565,9 +529,6 @@ export default function SearchTestPage() {
                         <div className="pt-4">
                           <p className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wide mb-1">Search with AI</p>
                           <ConfigToggle label="Enable Search with AI" checked={config.mobileShowSearchWithAI} onChange={v => update('mobileShowSearchWithAI', v)} />
-                          {config.mobileShowSearchWithAI && (
-                            <SegmentedControl value={config.mobileAiDisplayStyle} onChange={v => update('mobileAiDisplayStyle', v)} />
-                          )}
                         </div>
                       </>
                     )}

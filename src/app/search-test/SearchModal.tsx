@@ -128,19 +128,6 @@ function ProductCard({ name, desc, price, img, theme, scrollable = false }: {
   );
 }
 
-function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <button
-      onClick={onToggle}
-      className={cn(
-        'relative flex items-center h-[24px] w-[44px] rounded-full px-[2px] transition-colors duration-200 shrink-0',
-        on ? 'bg-[#18181b]' : 'bg-[#e4e4e7]'
-      )}
-    >
-      <span className={cn('block size-[20px] rounded-full bg-white shadow-md transition-transform duration-200', on ? 'translate-x-[20px]' : 'translate-x-0')} />
-    </button>
-  );
-}
 
 function WandGradientIcon({ size }: { size: number }) {
   return (
@@ -420,25 +407,18 @@ export default function SearchModal({ onClose, config, theme, preview = false }:
                 <>
                   {/* Search with AI */}
                   {config.showSearchWithAI && (
-                    <div className={`${config.aiDisplayStyle === 'toggle' ? 'flex items-center justify-between px-4 pt-[14px] pb-2 border-b border-[#e5e7eb]' : 'px-3 pt-3 pb-2'}`}>
-                      {config.aiDisplayStyle === 'toggle' ? (
-                        <>
-                          <span className="text-[14px] leading-[20px] font-semibold text-[#0f172a]">Search with AI</span>
-                          <Toggle on={aiEnabled} onToggle={() => setAiEnabled(v => !v)} />
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => setAiEnabled(true)}
-                          className="search-ai-btn w-full flex items-center gap-2 border border-[#dfc49a] text-[#334155] text-[13px] font-normal px-3 py-2 rounded-lg group/ai"
-                        >
-                          <span className="text-left flex-1 leading-[18px]">
-                            Search "{query}" with AI
-                          </span>
-                          <span className="wand-icon relative shrink-0 w-4 h-4" style={{ transform: 'scaleX(-1)' }}>
-                            <WandGradientIcon size={16} />
-                          </span>
-                        </button>
-                      )}
+                    <div className="px-3 pt-3 pb-2">
+                      <button
+                        onClick={() => setAiEnabled(true)}
+                        className="search-ai-btn w-full flex items-center gap-2 border border-[#dfc49a] text-[#334155] text-[13px] font-normal px-3 py-2 rounded-lg group/ai"
+                      >
+                        <span className="text-left flex-1 leading-[18px]">
+                          Search "{query}" with AI
+                        </span>
+                        <span className="wand-icon relative shrink-0 w-4 h-4" style={{ transform: 'scaleX(-1)' }}>
+                          <WandGradientIcon size={16} />
+                        </span>
+                      </button>
                     </div>
                   )}
 

@@ -58,7 +58,6 @@ const VARIANT_A_DEFAULT: SearchConfig = {
   showSuggestedCategories: true,
   showHandpickedForYou: true,
   showSearchWithAI: true,
-  aiDisplayStyle: 'toggle',
   showLeftSidebar: true,
   showRecentSearches: true,
   recentCount: 5,
@@ -71,7 +70,6 @@ const VARIANT_A_DEFAULT: SearchConfig = {
   mobileRecentCount: 8,
   mobileShowAutoSuggestions: true,
   mobileShowSearchWithAI: true,
-  mobileAiDisplayStyle: 'toggle',
 };
 
 const VARIANT_B_DEFAULT: SearchConfig = {
@@ -80,7 +78,6 @@ const VARIANT_B_DEFAULT: SearchConfig = {
   showSuggestedCategories: true,
   showHandpickedForYou: true,
   showSearchWithAI: true,
-  aiDisplayStyle: 'cta',
   showLeftSidebar: true,
   showRecentSearches: true,
   recentCount: 5,
@@ -93,7 +90,6 @@ const VARIANT_B_DEFAULT: SearchConfig = {
   mobileRecentCount: 8,
   mobileShowAutoSuggestions: true,
   mobileShowSearchWithAI: true,
-  mobileAiDisplayStyle: 'cta',
 };
 
 // ── Preview data ───────────────────────────────────────────────────────────────
